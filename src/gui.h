@@ -10,16 +10,18 @@
 #include <wx/artprov.h>
 #include <wx/xrc/xmlres.h>
 #include <wx/string.h>
-#include <wx/checkbox.h>
+#include <wx/stattext.h>
 #include <wx/gdicmn.h>
 #include <wx/font.h>
 #include <wx/colour.h>
 #include <wx/settings.h>
+#include <wx/choice.h>
+#include <wx/sizer.h>
+#include <wx/checkbox.h>
 #include <wx/bitmap.h>
 #include <wx/image.h>
 #include <wx/icon.h>
 #include <wx/button.h>
-#include <wx/sizer.h>
 #include <wx/dialog.h>
 
 ///////////////////////////////////////////////////////////////////////////
@@ -33,13 +35,25 @@ class SettingsDialogGui : public wxDialog
 	private:
 
 	protected:
-		wxCheckBox* m_checkBox1;
-		wxButton* m_button1;
-		wxButton* m_button2;
+		wxStaticText* m_staticText1;
+		wxChoice* cbFormats;
+		wxStaticText* m_staticText2;
+		wxChoice* cbMp3Modes;
+		wxStaticText* m_staticText3;
+		wxChoice* cbSamplingRate;
+		wxStaticText* m_staticText4;
+		wxChoice* cbMp3CbrRates;
+		wxStaticText* m_staticText5;
+		wxChoice* cbMp3VbrQuality;
+		wxCheckBox* chkStereo;
+		wxCheckBox* chkNormalize;
+		wxCheckBox* chkAlwaysShow;
+		wxButton* btnOK;
+		wxButton* btnCancel;
 
 	public:
 
-		SettingsDialogGui( wxWindow* parent, wxWindowID id = wxID_ANY, const wxString& title = wxT("Audioconverter"), const wxPoint& pos = wxDefaultPosition, const wxSize& size = wxSize( 622,312 ), long style = wxDEFAULT_DIALOG_STYLE );
+		SettingsDialogGui( wxWindow* parent, wxWindowID id = wxID_ANY, const wxString& title = wxT("Audioconverter"), const wxPoint& pos = wxDefaultPosition, const wxSize& size = wxSize( 622,257 ), long style = wxDEFAULT_DIALOG_STYLE );
 		~SettingsDialogGui();
 
 };

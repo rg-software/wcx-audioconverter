@@ -3,10 +3,13 @@
 #include <cstddef>
 #include <cstdio>
 #include <stdlib.h>
+#include <string>
 #include "guirunner.h"
 #include <wchar.h>
+#include <pathcch.h>
 
 int* gArchive = NULL;
+std::string gPluginIniPath;
 
 wcx_export HANDLE __stdcall OpenArchive(tOpenArchiveData* ArchiveData)
 {
@@ -71,9 +74,15 @@ wcx_export void __stdcall SetProcessDataProcW(HANDLE hArcData, tProcessDataProcW
 	return;
 }
 
+wcx_export void __stdcall PackSetDefaultParams(PackDefaultParamStruct* dps)
+{	
+	gPluginIniPath = dps->DefaultIniName;
+	gPluginIniPath = gPluginIniPath.substr(0, gPluginIniPath.find_last_of('\\') + 1) + "audioconverter.ini";
+}
+
 wcx_export void __stdcall ConfigurePacker(HWND Parent, HINSTANCE DllInstance) {
 
-	run_wx_gui_from_dll("", Parent);
+	run_wx_gui_from_dll(gPluginIniPath.c_str(), Parent);
 }
 
 wcx_export int __stdcall GetPackerCaps()

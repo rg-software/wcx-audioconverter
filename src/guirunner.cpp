@@ -11,6 +11,7 @@
 static const int CMD_SHOW_WINDOW = wxNewId();
 static const int CMD_TERMINATE = wxNewId();
 HWND gParent;
+std::string gIniPath;
 
 class MyDllApp : public wxApp
 {
@@ -30,7 +31,7 @@ private:
 		SetTopWindow(&win);
 		win.Enable(false);
 		{
-			SettingsDialog dlg(&win);
+			SettingsDialog dlg(&win, gIniPath);
 			dlg.ShowModal();
 		}
 		win.Enable(true);
@@ -72,9 +73,11 @@ namespace
 
 extern "C"
 {
-	void run_wx_gui_from_dll(const char *title, HWND Parent)
+	void run_wx_gui_from_dll(const char* iniPath, HWND Parent)
 	{
 		gParent = Parent;
+		gIniPath = iniPath;
+
 	    wxCriticalSectionLocker lock(gs_wxStartupCS);
 
 	    if (!gs_wxMainThread)
@@ -96,7 +99,7 @@ extern "C"
 	    }
 
 	    wxThreadEvent *event = new wxThreadEvent(wxEVT_THREAD, CMD_SHOW_WINDOW);
-	    event->SetString(title);
+	    event->SetString("");
 	    wxQueueEvent(wxApp::GetInstance(), event);
 	}
 
