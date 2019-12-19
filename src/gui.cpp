@@ -99,8 +99,14 @@ SettingsDialogGui::SettingsDialogGui( wxWindow* parent, wxWindowID id, const wxS
 	this->Layout();
 
 	this->Centre( wxBOTH );
+
+	// Connect Events
+	btnOK->Connect( wxEVT_COMMAND_BUTTON_CLICKED, wxCommandEventHandler( SettingsDialogGui::btnOK_Click ), NULL, this );
 }
 
 SettingsDialogGui::~SettingsDialogGui()
 {
+	// Disconnect Events
+	btnOK->Disconnect( wxEVT_COMMAND_BUTTON_CLICKED, wxCommandEventHandler( SettingsDialogGui::btnOK_Click ), NULL, this );
+
 }

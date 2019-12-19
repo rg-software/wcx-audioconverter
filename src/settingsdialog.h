@@ -21,7 +21,14 @@ public:
 	//// end generated class members
 
 private:
-	void setDialogItemFromConfig(const wxFileConfig& config, const wxString& key, wxCheckBox* chkBox, bool defValue);
+	wxFileConfig mConfig;
+
+	void setDialogItemFromConfig(const wxFileConfig& config, const wxString& key, bool defValue, wxCheckBox* chkBox);
+	void setDialogItemFromConfig(const wxFileConfig& config, const wxString& key, const wxString& defValues, 
+								 const wxString& defValueKey, int defValueIndex, wxChoice* cbChoice);
+
+protected:
+	virtual void btnOK_Click(wxCommandEvent& event);
 };
 
 #endif // __settingsdialog__

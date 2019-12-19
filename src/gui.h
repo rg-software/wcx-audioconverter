@@ -51,6 +51,10 @@ class SettingsDialogGui : public wxDialog
 		wxButton* btnOK;
 		wxButton* btnCancel;
 
+		// Virtual event handlers, overide them in your derived class
+		virtual void btnOK_Click( wxCommandEvent& event ) { event.Skip(); }
+
+
 	public:
 
 		SettingsDialogGui( wxWindow* parent, wxWindowID id = wxID_ANY, const wxString& title = wxT("Audioconverter"), const wxPoint& pos = wxDefaultPosition, const wxSize& size = wxSize( 622,257 ), long style = wxDEFAULT_DIALOG_STYLE );
