@@ -14,37 +14,30 @@ std::string gPluginIniPath;
 
 wcx_export HANDLE __stdcall OpenArchive(tOpenArchiveData* ArchiveData)
 {
-	//MessageBox(NULL, L"OpenArchive called", L"ZPAQ", MB_OK | MB_ICONWARNING);
-
-	//gArchive = new int; // $MM TO FIX -- every time new archive!
 	return &gArchive;
 }
 
 wcx_export int __stdcall ReadHeader(HANDLE hArcData, tHeaderData* HeaderData)
 {
-	//MessageBox(NULL, L"ReadHeader called", L"ZPAQ", MB_OK | MB_ICONWARNING);
-
 	return E_BAD_ARCHIVE;
 }
 
 wcx_export int __stdcall ProcessFile(HANDLE hArcData, int Operation, char* DestPath, char* DestName)
 {
-	//MessageBox(NULL, L"ProcessFile called", L"ZPAQ", MB_OK | MB_ICONWARNING);
-
 	return E_BAD_ARCHIVE;
 }
 
-wcx_export int __stdcall CloseArchive(HANDLE hArcData) {
-	//MessageBox(NULL, L"CloseArchive called", L"ZPAQ", MB_OK | MB_ICONWARNING);
-
+wcx_export int __stdcall CloseArchive(HANDLE hArcData) 
+{
 	return E_SMALL_BUF;
 }
 
-wcx_export void __stdcall SetChangeVolProc(HANDLE hArcData, tChangeVolProc pChangeVolProc1) {
-//	return;
+wcx_export void __stdcall SetChangeVolProc(HANDLE hArcData, tChangeVolProc pChangeVolProc1) 
+{
 }
 
-wcx_export void __stdcall SetProcessDataProc(HANDLE hArcData, tProcessDataProc pProcessDataProc) {
+wcx_export void __stdcall SetProcessDataProc(HANDLE hArcData, tProcessDataProc pProcessDataProc) 
+{
 }
 
 tProcessDataProcW g_ProcessDataProc;
