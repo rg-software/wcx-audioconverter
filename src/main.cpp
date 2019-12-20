@@ -97,74 +97,40 @@ bool alwaysShow()
 	return false;
 }
 
-wcx_export int __stdcall PackFilesW(wchar_t* PackedFile, wchar_t* SubPath, wchar_t* SrcPath, wchar_t* AddList, int Flags)
+// unfortunately, there is no good way to find a parent window for our settings screen, so let's use a hack for now
+HWND foundFileDialogHWND;
+
+BOOL CALLBACK EnumWindowsProc(HWND hWnd, LPARAM lParam)
 {
-	if (alwaysShow()) // $MM TODO: get parent HWND of TotalCommander and use it instead of NULL
+	DWORD process;
+	GetWindowThreadProcessId(hWnd, &process);
+
+	if (GetCurrentProcessId() == process) 
 	{
-		if (ShowConfigUI(gPluginIniPath.c_str(), NULL) == ERROR_CANCELLED)	
-			return 0; // no files to pack
-	}
-
-//	foreach(var v in addList)  // convert each file
-	//{
-		//if (!ConvertFile(srcPath, v, destPath, (flags & PackFilesFlags.SavePaths) != 0, (flags & PackFilesFlags.MoveFiles) != 0, sd))
-			//return PackerResult.EAborted;
-//	}
-
-	return 0;
-
-
-	//std::wostream wos(PackedFile);
-	auto fhandle = _wfopen(PackedFile, L"wb");
-	fprintf(fhandle, "blablablabla");
-	fclose(fhandle);
-
-	wchar_t* CurFile = AddList;
-	int FilesCount = 0;
-	while (*CurFile)
-	{
-		//	MessageBox("File found");
-			//MessageBox(CurFile);
-		CurFile += wcslen(CurFile) + 1;
-		FilesCount++;
-	}
-
-	CurFile = AddList;
-	//int progress = 0;
-	for (size_t f = 1; f <= FilesCount + 1; ++f)
-	{
-		//MessageBox("Packing file");
-		//MessageBox(CurFile);
-
-
-		struct __stat64 buf;
-		int size = 0;
-		if (_wstat64(CurFile, &buf) == 0)
-			size = buf.st_size;//MessageBox("File not found");//return -1; // error, could use errno to find out more
-
-		//return buf.st_size;
-		//int size = buf.st_size;
-
-		g_ProcessDataProc(CurFile, size);//-(100 * f / FilesCount));
-		CurFile += wcslen(CurFile) + 1;
-		Sleep(1000);
-	}
-
-	/*	std::vector<std::string> files = { "temp1.txt", "temp2.txt", "temp3.txt", "temp4.txt" };
-		for (size_t f = 1; f <= files.size(); ++f)
+		wchar_t buffer[100];
+		GetClassName(hWnd, buffer, 100);
+		if (std::wstring(buffer) == L"TDLG2FILEACTIONMIN")
 		{
-			g_ProcessDataProc((char*)files[f-1].c_str(), -(100*f/files.size()));
-			for(size_t i = 0; i < 10; ++i)
-			{
-				g_ProcessDataProc((char*)files[f-1].c_str(), -i*10 - 1000);
-				Sleep(100);
-			}
-		}*/
+			foundFileDialogHWND = hWnd;
+			return FALSE;
+		}
+	}
+	return TRUE;
 }
 
-/*
-private bool ConvertFile(string srcPath, string filePath, string destPath, bool savePath, bool moveFile, SettingsDialog sd)
+HWND GetFileDialogHandle()
 {
+	foundFileDialogHWND = NULL;	// race condition possible but extremely unlikely here
+	EnumWindows(EnumWindowsProc, NULL);
+	return foundFileDialogHWND;
+}
+
+// $MM TODO: use non-wx config file class; 
+// make SoX runner class
+
+bool ConvertFile(const std::wstring& srcPath, const std::wstring& filePath, const std::wstring& destPath, bool savePath, bool moveFile)
+{
+	/*
 	// first, skip directories (but create the same folder structure in the output directory)
 	var fullFilePath = srcPath + Path.DirectorySeparatorChar + filePath;
 	FileAttributes attr = File.GetAttributes(fullFilePath);
@@ -206,5 +172,41 @@ private bool ConvertFile(string srcPath, string filePath, string destPath, bool 
 		System.IO.File.Delete(fullFilePath);
 
 	return true;
+	*/
+	return false;
 }
-*/
+
+wcx_export int __stdcall PackFilesW(wchar_t* PackedFile, wchar_t* SubPath, wchar_t* SrcPath, wchar_t* AddList, int Flags)
+{
+	HWND parentHwnd = GetFileDialogHandle();
+
+	if (alwaysShow())
+	{
+		if (ShowConfigUI(gPluginIniPath.c_str(), parentHwnd) == ERROR_CANCELLED)
+			return 0; // no files to pack
+	}
+
+	wchar_t* curFile = AddList;
+	while (*curFile)
+	{
+		std::wstring destPath = PackedFile; // $mm TODO get dir name
+		destPath = destPath.substr(0, destPath.find_last_of(L'\\'));
+
+		if (!ConvertFile(SrcPath, curFile, destPath, (Flags &  PK_PACK_SAVE_PATHS) != 0, (Flags & PK_PACK_MOVE_FILES) != 0))
+			return E_EABORTED;
+
+		/*
+		std::wstring fullFilePath = std::wstring(SrcPath) + curFile;
+		MessageBox(NULL, fullFilePath.c_str(), L"", 0);
+
+		struct __stat64 buf;
+		int size = 0;
+		if (_wstat64(fullFilePath.c_str(), &buf) == 0)
+			size = buf.st_size;//MessageBox("File not found");//return -1; // error, could use errno to find out more
+
+		g_ProcessDataProc(curFile, size);
+		*/
+		curFile += wcslen(curFile) + 1;
+	}
+	return 0;
+}

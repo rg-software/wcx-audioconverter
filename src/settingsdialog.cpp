@@ -24,7 +24,7 @@ void SettingsDialog::btnOK_Click(wxCommandEvent &)
 	mConfig.Write("mp3Mode", cbMp3Modes->GetSelection());
 	mConfig.Write("mp3CbrBitrate", cbMp3CbrRates->GetSelection());
 	mConfig.Write("mp3VbrQuality", cbMp3VbrQuality->GetSelection());
-	EndModal(wxOK);
+	EndModal(wxID_OK);
 }
 
 void SettingsDialog::setDialogItemFromConfig(const wxFileConfig& config, const wxString& key, const wxString& defValues, 
