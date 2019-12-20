@@ -4,43 +4,47 @@
 #include <cstdio>
 #include <stdlib.h>
 #include <string>
-#include "guirunner.h"
 #include <wchar.h>
 #include <pathcch.h>
+#include "guirunner.h"
+#include "settingsdialog.h"
 
-int* gArchive = NULL;
+int gArchive = 1;
 std::string gPluginIniPath;
 
 wcx_export HANDLE __stdcall OpenArchive(tOpenArchiveData* ArchiveData)
 {
-	MessageBox(NULL, L"OpenArchive called", L"ZPAQ", MB_OK | MB_ICONWARNING);
+	//MessageBox(NULL, L"OpenArchive called", L"ZPAQ", MB_OK | MB_ICONWARNING);
 
-	gArchive = new int; // $MM TO FIX -- every time new archive!
-	return gArchive;
+	//gArchive = new int; // $MM TO FIX -- every time new archive!
+	return &gArchive;
 }
 
 wcx_export int __stdcall ReadHeader(HANDLE hArcData, tHeaderData* HeaderData)
 {
-	MessageBox(NULL, L"ReadHeader called", L"ZPAQ", MB_OK | MB_ICONWARNING);
+	//MessageBox(NULL, L"ReadHeader called", L"ZPAQ", MB_OK | MB_ICONWARNING);
 
 	return E_BAD_ARCHIVE;
 }
 
 wcx_export int __stdcall ProcessFile(HANDLE hArcData, int Operation, char* DestPath, char* DestName)
 {
-	MessageBox(NULL, L"ProcessFile called", L"ZPAQ", MB_OK | MB_ICONWARNING);
+	//MessageBox(NULL, L"ProcessFile called", L"ZPAQ", MB_OK | MB_ICONWARNING);
 
 	return E_BAD_ARCHIVE;
 }
 
 wcx_export int __stdcall CloseArchive(HANDLE hArcData) {
-	MessageBox(NULL, L"CloseArchive called", L"ZPAQ", MB_OK | MB_ICONWARNING);
+	//MessageBox(NULL, L"CloseArchive called", L"ZPAQ", MB_OK | MB_ICONWARNING);
 
 	return E_SMALL_BUF;
 }
 
 wcx_export void __stdcall SetChangeVolProc(HANDLE hArcData, tChangeVolProc pChangeVolProc1) {
-	return;
+//	return;
+}
+
+wcx_export void __stdcall SetProcessDataProc(HANDLE hArcData, tProcessDataProc pProcessDataProc) {
 }
 
 tProcessDataProcW g_ProcessDataProc;
@@ -58,20 +62,20 @@ void MessageBox(char *str)
 	MessageBox(NULL, unistring, L"ZPAQ", MB_OK);
 }
 
-wcx_export void __stdcall SetProcessDataProc(HANDLE hArcData, tProcessDataProc pProcessDataProc) {
-}
 
 wcx_export void __stdcall SetProcessDataProcW(HANDLE hArcData, tProcessDataProcW pProcessDataProc) {
-	char buffer[100];
-	ltoa(reinterpret_cast<long>(hArcData), buffer, 10);
+	MessageBox("ProcessDataProc called!");
+	//	char buffer[100];
+	//ltoa(reinterpret_cast<long>(hArcData), buffer, 10);
 
-	MessageBox(NULL, L"SetProcessDataProc called", L"ZPAQ", MB_OK | MB_ICONWARNING);
-	MessageBox(buffer);
+	//MessageBox(NULL, L"SetProcessDataProc called", L"ZPAQ", MB_OK | MB_ICONWARNING);
+	//MessageBox(buffer);
 
-	if (pProcessDataProc == INVALID_HANDLE_VALUE)
-		MessageBox("Invalid handle");
+	//i/f (pProcessDataProc == INVALID_HANDLE_VALUE)
+		//MessageBox("Invalid handle");
+	
 	g_ProcessDataProc = pProcessDataProc;
-	return;
+//	return;
 }
 
 wcx_export void __stdcall PackSetDefaultParams(PackDefaultParamStruct* dps)
@@ -83,11 +87,45 @@ wcx_export void __stdcall PackSetDefaultParams(PackDefaultParamStruct* dps)
 wcx_export void __stdcall ConfigurePacker(HWND Parent, HINSTANCE DllInstance) {
 
 	run_wx_gui_from_dll(gPluginIniPath.c_str(), Parent);
+	// $MM TODO: make Parent the top window when the dialog is closed
+	/*
+
+	MSG msg;
+	BOOL result;
+
+	while (::PeekMessage(&msg, NULL, 0, 0, PM_NOREMOVE))
+	{
+		Sleep(100);
+		result = ::GetMessage(&msg, NULL, 0, 0);
+		if (result == 0) // WM_QUIT
+		{
+			::PostQuitMessage(msg.wParam);
+			break;
+		}
+		else if (result == -1)
+		{
+			// Handle errors/exit application, etc.
+		}
+		else
+		{
+			::TranslateMessage(&msg);
+			::DispatchMessage(&msg);
+		}
+	}
+
+	*/
+	//Sleep(5000);
+	//MessageBox("Hello!");
 }
 
 wcx_export int __stdcall GetPackerCaps()
 {
 	return PK_CAPS_NEW | PK_CAPS_MULTIPLE | PK_CAPS_OPTIONS | PK_CAPS_HIDE;
+}
+
+wcx_export int _stdcall GetBackgroundFlags()
+{
+	return BACKGROUND_PACK | BACKGROUND_UNPACK;	// MUST be thread-safe to show correct progress indicator (due to TC bug)
 }
 
 wcx_export int __stdcall PackFiles(char* PackedFile, char* SubPath, char* SrcPath, char* AddList, int Flags)

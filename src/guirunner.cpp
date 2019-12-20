@@ -12,6 +12,7 @@ static const int CMD_SHOW_WINDOW = wxNewId();
 static const int CMD_TERMINATE = wxNewId();
 HWND gParent;
 std::string gIniPath;
+int gLastModalResult;
 
 class MyDllApp : public wxApp
 {
@@ -32,7 +33,7 @@ private:
 		win.Enable(false);
 		{
 			SettingsDialog dlg(&win, gIniPath);
-			dlg.ShowModal();
+			gLastModalResult = dlg.ShowModal();
 		}
 		win.Enable(true);
 	}
