@@ -1,120 +1,82 @@
 #include <wx/wxprec.h>
 #include <wx/app.h> 
 #include <wx/dynlib.h>
-#include <wx/thread.h>
 #include <wx/msw/wrapwin.h>
 #include <process.h>
 
-#include "guirunner.h"
 #include "settingsdialog.h"
 
-static const int CMD_SHOW_WINDOW = wxNewId();
-static const int CMD_TERMINATE = wxNewId();
-HWND gParent;
-std::string gIniPath;
-int gLastModalResult;
+HINSTANCE g_instance = NULL;
+HANDLE g_act_ctx = NULL;
 
-class MyDllApp : public wxApp
+class actctx_activator
 {
+protected:
+	ULONG_PTR m_cookie; // Cookie for context deactivation
+
 public:
-    MyDllApp()
+	// Construct the activator and activates the given activation context
+	actctx_activator(_In_ HANDLE hActCtx)
 	{
-		SetExitOnFrameDelete(false);
-		Connect(CMD_SHOW_WINDOW, wxEVT_THREAD, wxThreadEventHandler(MyDllApp::OnShowWindow));
-		Connect(CMD_TERMINATE, wxEVT_THREAD, wxThreadEventHandler(MyDllApp::OnTerminate));
+		if (!ActivateActCtx(hActCtx, &m_cookie))
+			m_cookie = 0;
 	}
 
-private:
-    void OnShowWindow(wxThreadEvent&)
+	// Deactivates activation context and destructs the activator
+	virtual ~actctx_activator()
 	{
-		wxWindow win;
-		win.SetHWND((WXHWND)gParent);
-		SetTopWindow(&win);
-		win.Enable(false);
-		{
-			SettingsDialog dlg(&win, gIniPath);
-			gLastModalResult = dlg.ShowModal();
-		}
-		win.Enable(true);
-	}
-	
-	void OnTerminate(wxThreadEvent&)
-	{
-		ExitMainLoop();
+		if (m_cookie)
+			DeactivateActCtx(0, m_cookie);
 	}
 };
 
-wxIMPLEMENT_APP_NO_MAIN(MyDllApp);
-
-namespace
+BOOL WINAPI DllMain(_In_ HINSTANCE hinstDLL, _In_ DWORD fdwReason, _In_ LPVOID lpvReserved)
 {
-	wxCriticalSection gs_wxStartupCS;
-	HANDLE gs_wxMainThread = NULL;
+	UNREFERENCED_PARAMETER(lpvReserved);
 
-	unsigned wxSTDCALL MyAppLauncher(void* event)
+	if (fdwReason == DLL_PROCESS_ATTACH) 
 	{
-	    const HINSTANCE hInstance = wxDynamicLibrary::MSWGetModuleHandle("audioconverter", &gs_wxMainThread);
-	    if (!hInstance)
-	        return 0; 
-	    
-		wxDISABLE_DEBUG_SUPPORT();
+		// Save DLL's instance handle.
+		g_instance = hinstDLL;
 
-	    wxInitializer wxinit;
-	    if (!wxinit.IsOk())
-	        return 0; 
-	    
-		HANDLE hEvent = *(static_cast<HANDLE*>(event));
-	    if (!SetEvent(hEvent))
-	        return 0;
-
-	    wxEntry(hInstance);
-	    return 1;
+		// Save current activation context.
+		GetCurrentActCtx(&g_act_ctx);
 	}
+	else if (fdwReason == DLL_PROCESS_DETACH) 
+	{
+		if (g_act_ctx)
+			ReleaseActCtx(g_act_ctx);
+	}
+
+	return TRUE;
 }
 
-extern "C"
+DWORD ShowConfigUI(const char* iniPath, HWND Parent)
 {
-	void run_wx_gui_from_dll(const char* iniPath, HWND Parent)
+	// Restore plugin's activation context.
+	actctx_activator actctx(g_act_ctx);
+
+	// Initialize application.
+	new wxApp();
+	wxEntryStart(g_instance);
+
+	int result;
 	{
-		gParent = Parent;
-		gIniPath = iniPath;
+		// Create wxWidget-approved parent window.
+		wxWindow parent;
+		parent.SetHWND((WXHWND)Parent);
+		parent.AdoptAttributesFromHWND();
+		wxTopLevelWindows.Append(&parent);
 
-	    wxCriticalSectionLocker lock(gs_wxStartupCS);
+		// Create and launch configuration dialog.
+		SettingsDialog dlg(&parent, iniPath);
+		result = dlg.ShowModal();
 
-	    if (!gs_wxMainThread)
-	    {
-	        HANDLE hEvent = CreateEvent(NULL, FALSE, FALSE, NULL);
-	        if (!hEvent)
-	            return;
-
-	        gs_wxMainThread = (HANDLE)_beginthreadex(NULL, 0, &MyAppLauncher, &hEvent, 0, NULL);
-
-	        if (!gs_wxMainThread)
-	        {
-	            CloseHandle(hEvent);
-	            return; 
-	        }
-
-	        WaitForSingleObject(hEvent, INFINITE);
-	        CloseHandle(hEvent);
-	    }
-
-	    wxThreadEvent *event = new wxThreadEvent(wxEVT_THREAD, CMD_SHOW_WINDOW);
-	    event->SetString("");
-	    wxQueueEvent(wxApp::GetInstance(), event);
+		wxTopLevelWindows.DeleteObject(&parent);
+		parent.SetHWND((WXHWND)NULL);
 	}
 
-	void wx_dll_cleanup()
-	{
-	    wxCriticalSectionLocker lock(gs_wxStartupCS);
-
-	    if (!gs_wxMainThread)
-	        return;
-	    
-		wxThreadEvent *event = new wxThreadEvent(wxEVT_THREAD, CMD_TERMINATE);
-	    wxQueueEvent(wxApp::GetInstance(), event);
-	    WaitForSingleObject(gs_wxMainThread, INFINITE);
-	    CloseHandle(gs_wxMainThread);
-	    gs_wxMainThread = NULL;
-	}
+	// Clean-up and return.
+	wxEntryCleanup();
+	return result == wxID_OK ? ERROR_SUCCESS : ERROR_CANCELLED;
 }

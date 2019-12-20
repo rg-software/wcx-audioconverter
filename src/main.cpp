@@ -2,12 +2,10 @@
 #include "wcxhead.h"
 #include <cstddef>
 #include <cstdio>
-#include <stdlib.h>
 #include <string>
 #include <wchar.h>
-#include <pathcch.h>
-#include "guirunner.h"
 #include "settingsdialog.h"
+#include <fstream>
 
 int gArchive = 1;
 std::string gPluginIniPath;
@@ -40,35 +38,29 @@ wcx_export void __stdcall SetProcessDataProc(HANDLE hArcData, tProcessDataProc p
 {
 }
 
+wcx_export int __stdcall PackFiles(char* PackedFile, char* SubPath, char* SrcPath, char* AddList, int Flags)
+{
+	return 0;
+}
+
+// core functions
+
 tProcessDataProcW g_ProcessDataProc;
+DWORD ShowConfigUI(const char* iniPath, HWND Parent);
 
-
-
-void MessageBox(char *str)
+void MessageBox(char *str)	// for debugging
 {
 	if (str == NULL)
 		return;
-	//char *string = "The quick brown fox jumps over the lazy dog";
 	size_t len = strlen(str);
-	WCHAR unistring[1024];//len + 1];
+	WCHAR unistring[1024];
 	int result = MultiByteToWideChar(CP_OEMCP, 0, str, -1, unistring, len + 1);
-	MessageBox(NULL, unistring, L"ZPAQ", MB_OK);
+	MessageBox(NULL, unistring, L"Message", MB_OK);
 }
 
-
-wcx_export void __stdcall SetProcessDataProcW(HANDLE hArcData, tProcessDataProcW pProcessDataProc) {
-	MessageBox("ProcessDataProc called!");
-	//	char buffer[100];
-	//ltoa(reinterpret_cast<long>(hArcData), buffer, 10);
-
-	//MessageBox(NULL, L"SetProcessDataProc called", L"ZPAQ", MB_OK | MB_ICONWARNING);
-	//MessageBox(buffer);
-
-	//i/f (pProcessDataProc == INVALID_HANDLE_VALUE)
-		//MessageBox("Invalid handle");
-	
+wcx_export void __stdcall SetProcessDataProcW(HANDLE hArcData, tProcessDataProcW pProcessDataProc) 
+{
 	g_ProcessDataProc = pProcessDataProc;
-//	return;
 }
 
 wcx_export void __stdcall PackSetDefaultParams(PackDefaultParamStruct* dps)
@@ -77,38 +69,9 @@ wcx_export void __stdcall PackSetDefaultParams(PackDefaultParamStruct* dps)
 	gPluginIniPath = gPluginIniPath.substr(0, gPluginIniPath.find_last_of('\\') + 1) + "audioconverter.ini";
 }
 
-wcx_export void __stdcall ConfigurePacker(HWND Parent, HINSTANCE DllInstance) {
-
-	run_wx_gui_from_dll(gPluginIniPath.c_str(), Parent);
-	// $MM TODO: make Parent the top window when the dialog is closed
-	/*
-
-	MSG msg;
-	BOOL result;
-
-	while (::PeekMessage(&msg, NULL, 0, 0, PM_NOREMOVE))
-	{
-		Sleep(100);
-		result = ::GetMessage(&msg, NULL, 0, 0);
-		if (result == 0) // WM_QUIT
-		{
-			::PostQuitMessage(msg.wParam);
-			break;
-		}
-		else if (result == -1)
-		{
-			// Handle errors/exit application, etc.
-		}
-		else
-		{
-			::TranslateMessage(&msg);
-			::DispatchMessage(&msg);
-		}
-	}
-
-	*/
-	//Sleep(5000);
-	//MessageBox("Hello!");
+wcx_export void __stdcall ConfigurePacker(HWND Parent, HINSTANCE DllInstance) 
+{
+	ShowConfigUI(gPluginIniPath.c_str(), Parent);
 }
 
 wcx_export int __stdcall GetPackerCaps()
@@ -121,23 +84,35 @@ wcx_export int _stdcall GetBackgroundFlags()
 	return BACKGROUND_PACK | BACKGROUND_UNPACK;	// MUST be thread-safe to show correct progress indicator (due to TC bug)
 }
 
-wcx_export int __stdcall PackFiles(char* PackedFile, char* SubPath, char* SrcPath, char* AddList, int Flags)
+// this is a quick check function, necessary due to the fact that 
+// wxFileConfig and SettingsDialog cannot be used here (outside wxWidgets)
+bool alwaysShow()
 {
-	return 0;
+	std::ifstream is(gPluginIniPath);
+	std::string asLine = "alwaysShow=1";
+	std::string line;
+	while (std::getline(is, line))
+		if (line.substr(0, asLine.length()) == asLine)
+			return true;
+	return false;
 }
 
 wcx_export int __stdcall PackFilesW(wchar_t* PackedFile, wchar_t* SubPath, wchar_t* SrcPath, wchar_t* AddList, int Flags)
 {
-	MessageBox(NULL, L"PackFiles called", L"ZPAQ", MB_OK | MB_ICONWARNING);
+	if (alwaysShow()) // $MM TODO: get parent HWND of TotalCommander and use it instead of NULL
+	{
+		if (ShowConfigUI(gPluginIniPath.c_str(), NULL) == ERROR_CANCELLED)	
+			return 0; // no files to pack
+	}
 
-	//MessageBox(PackedFile);
-	//MessageBox(SubPath);
-	//MessageBox(SrcPath);
+//	foreach(var v in addList)  // convert each file
+	//{
+		//if (!ConvertFile(srcPath, v, destPath, (flags & PackFilesFlags.SavePaths) != 0, (flags & PackFilesFlags.MoveFiles) != 0, sd))
+			//return PackerResult.EAborted;
+//	}
 
-	//MessageBox(AddList);
+	return 0;
 
-	//MessageBox(NULL, L"No support for Windows 9x or non-Unicode!", L"ZPAQ", MB_OK|MB_ICONWARNING);
-	//foreach(var v in addList)  // convert each file
 
 	//std::wostream wos(PackedFile);
 	auto fhandle = _wfopen(PackedFile, L"wb");
@@ -185,12 +160,51 @@ wcx_export int __stdcall PackFilesW(wchar_t* PackedFile, wchar_t* SubPath, wchar
 				Sleep(100);
 			}
 		}*/
-
-		//	wxThreadEvent *event =
-			//	new wxThreadEvent(wxEVT_THREAD, CMD_TERMINATE);
-		//	wxQueueEvent(wxApp::GetInstance(), event);
-
-
-
-	return 0;//PACKER RESULT OK;
 }
+
+/*
+private bool ConvertFile(string srcPath, string filePath, string destPath, bool savePath, bool moveFile, SettingsDialog sd)
+{
+	// first, skip directories (but create the same folder structure in the output directory)
+	var fullFilePath = srcPath + Path.DirectorySeparatorChar + filePath;
+	FileAttributes attr = File.GetAttributes(fullFilePath);
+	if ((attr & FileAttributes.Directory) == FileAttributes.Directory)
+	{
+		if (savePath)
+			System.IO.Directory.CreateDirectory(destPath + Path.DirectorySeparatorChar + filePath);
+		return true; // not a file
+	}
+
+
+	// prepare full input and output file names
+	var fileSize = (int)new System.IO.FileInfo(fullFilePath).Length;
+	string outExtension = "." + sd.GetOutputType().ToLower();
+	string outfileRelative = savePath ? filePath : Path.GetFileName(filePath);
+	string outfile = destPath + Path.DirectorySeparatorChar + Path.ChangeExtension(outfileRelative, outExtension);
+
+	// run Sox
+	var sr = new SoxRunner(fullFilePath, outfile, sd);
+	Thread caller = new Thread(new ThreadStart(sr.Process));
+	caller.Start();
+
+	// update progress bar until the process is finished
+	var prevProgress = 0;
+	while (!sr.Done)
+	{
+		Thread.Sleep(100);
+		var progress = (sr.Progress - prevProgress)*fileSize*0.01f;
+		prevProgress = sr.Progress;
+
+		if (ProcessDataProc(filePath, (int)progress) == 0)
+		{
+			sr.Abort();
+			return false;
+		}
+	}
+
+	if (moveFile)
+		System.IO.File.Delete(fullFilePath);
+
+	return true;
+}
+*/
