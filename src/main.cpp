@@ -63,10 +63,18 @@ wcx_export void __stdcall SetProcessDataProcW(HANDLE hArcData, tProcessDataProcW
 	g_ProcessDataProc = pProcessDataProc;
 }
 
+extern HINSTANCE g_instance;
 wcx_export void __stdcall PackSetDefaultParams(PackDefaultParamStruct* dps)
 {	
-	gPluginIniPath = dps->DefaultIniName;
-	gPluginIniPath = gPluginIniPath.substr(0, gPluginIniPath.find_last_of('\\') + 1) + "audioconverter.ini";
+	wchar_t iniFilePath[MAX_PATH];
+	GetModuleFileName(g_instance, iniFilePath, MAX_PATH);
+	wchar_t* dot = wcsrchr(iniFilePath, L'.');
+	wcscpy(dot, L".ini");
+
+	char iniFilePathChars[MAX_PATH];
+	wcstombs(iniFilePathChars, iniFilePath, MAX_PATH);
+
+	gPluginIniPath = iniFilePathChars;
 }
 
 wcx_export void __stdcall ConfigurePacker(HWND Parent, HINSTANCE DllInstance) 
@@ -84,17 +92,12 @@ wcx_export int _stdcall GetBackgroundFlags()
 	return BACKGROUND_PACK | BACKGROUND_UNPACK;	// MUST be thread-safe to show correct progress indicator (due to TC bug)
 }
 
-// this is a quick check function, necessary due to the fact that 
-// wxFileConfig and SettingsDialog cannot be used here (outside wxWidgets)
 bool alwaysShow()
 {
-	std::ifstream is(gPluginIniPath);
-	std::string asLine = "alwaysShow=1";
-	std::string line;
-	while (std::getline(is, line))
-		if (line.substr(0, asLine.length()) == asLine)
-			return true;
-	return false;
+	mINI::INIFile iniFile(gPluginIniPath);
+	mINI::INIStructure ini;
+	iniFile.read(ini);
+	return std::atoi(ini[""]["alwaysShow"].c_str());
 }
 
 // unfortunately, there is no good way to find a parent window for our settings screen, so let's use a hack for now
@@ -125,8 +128,8 @@ HWND GetFileDialogHandle()
 	return foundFileDialogHWND;
 }
 
-// $MM TODO: use non-wx config file class; 
 // make SoX runner class
+// also, move ini file to the plugin location (though it is not recommended by Ghisler)
 
 bool ConvertFile(const std::wstring& srcPath, const std::wstring& filePath, const std::wstring& destPath, bool savePath, bool moveFile)
 {
