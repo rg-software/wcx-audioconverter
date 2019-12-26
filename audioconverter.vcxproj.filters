@@ -36,5 +36,8 @@
     <ClInclude Include="src\guirunner.h">
       <Filter>Source Files</Filter>
     </ClInclude>
+    <ClInclude Include="src\utils.h">
+      <Filter>Source Files</Filter>
+    </ClInclude>
   </ItemGroup>
 </Project>

@@ -7,9 +7,15 @@
 #include "settingsdialog.h"
 #include "soxrunner.h"
 #include "inifileext.h"
+#include "guirunner.h"
 
-int gArchive = 1;
-std::string gPluginIniPath;
+namespace
+{
+	int gArchive = 1;
+	std::wstring gPluginIniPath;
+	tProcessDataProcW g_ProcessDataProc;
+	HWND foundFileDialogHWND;
+}
 
 wcx_export HANDLE __stdcall OpenArchive(tOpenArchiveData* ArchiveData)
 {
@@ -45,9 +51,6 @@ wcx_export int __stdcall PackFiles(char* PackedFile, char* SubPath, char* SrcPat
 }
 
 // core functions
-tProcessDataProcW g_ProcessDataProc;
-DWORD ShowConfigUI(const char* iniPath, HWND Parent);
-
 void MessageBox(char *str)	// for debugging
 {
 	if (str == NULL)
@@ -63,15 +66,14 @@ wcx_export void __stdcall SetProcessDataProcW(HANDLE hArcData, tProcessDataProcW
 	g_ProcessDataProc = pProcessDataProc;
 }
 
-std::string GetModulePath();
 wcx_export void __stdcall PackSetDefaultParams(PackDefaultParamStruct* dps)
 {	
-	gPluginIniPath = GetModulePath() + "audioconverter.ini";
+	gPluginIniPath = GetModulePath() + L"audioconverter.ini";
 }
 
 wcx_export void __stdcall ConfigurePacker(HWND Parent, HINSTANCE DllInstance) 
 {
-	ShowConfigUI(gPluginIniPath.c_str(), Parent);
+	ShowConfigUI(gPluginIniPath, Parent);
 }
 
 wcx_export int __stdcall GetPackerCaps()
@@ -85,8 +87,6 @@ wcx_export int _stdcall GetBackgroundFlags()
 }
 
 // unfortunately, there is no good way to find a parent window for our settings screen, so let's use a hack for now
-HWND foundFileDialogHWND;
-
 BOOL CALLBACK EnumWindowsProc(HWND hWnd, LPARAM lParam)
 {
 	DWORD process;
@@ -112,25 +112,15 @@ HWND GetFileDialogHandle()
 	return foundFileDialogHWND;
 }
 
-// make SoX runner class
-// also, move ini file to the plugin location (though it is not recommended by Ghisler)
-
-std::string GetIniListOption(IniFileExt& ini, const std::string& key, const std::string& indexKey)
-{
-	int index = ini.GetInteger(indexKey);
-	auto values = ini.GetStringList(key);
-	return values[index];
-}
-
 bool ConvertFile(const std::wstring& srcPath, const std::wstring& filePath, const std::wstring& destPath, bool savePath, bool moveFile, IniFileExt& ini)
 {
-	std::wstring fullFilePath = srcPath + L"\\" + filePath;
+	std::wstring fullFilePath = join_paths(srcPath, filePath);
 
 	// first, skip directories (but create the same folder structure in the output directory)
 	if((FILE_ATTRIBUTE_DIRECTORY & GetFileAttributes(fullFilePath.c_str())) == FILE_ATTRIBUTE_DIRECTORY)
 	{
 		if (savePath)
-			CreateDirectory((destPath + L"\\" + filePath).c_str(), NULL);
+			CreateDirectory(join_paths(destPath, filePath).c_str(), NULL);
 		return true;	// not a file
 	}
 
@@ -138,9 +128,9 @@ bool ConvertFile(const std::wstring& srcPath, const std::wstring& filePath, cons
 	//var fileSize = (int)new System.IO.FileInfo(fullFilePath).Length;
 
 	// use: changeExtension, getFilename
-	std::string outExtension = GetIniListOption(ini,  "fileTypes", "filetype");	// $mm TODO: TOLOWER!
-	std::wstring outfileRelative = savePath ? filePath : filePath.substr(filePath.find_last_of(L'\\' + 1));
-	std::wstring outfile = destPath + L"\\" + outfileRelative.substr(0, outfileRelative.find_last_of(L'.') + 1) + outExtension;
+	std::wstring outExtension = to_wstring(to_lower(ini.GetStringItem("fileTypes", "filetype")));
+	std::wstring outfileRelative = savePath ? filePath : get_filename(filePath);
+	std::wstring outfile = join_paths(destPath, change_extension(outfileRelative, outExtension));
 
 	SoxRunner sr(fullFilePath, outfile, ini);
 
@@ -179,19 +169,18 @@ wcx_export int __stdcall PackFilesW(wchar_t* PackedFile, wchar_t* SubPath, wchar
 {
 	HWND parentHwnd = GetFileDialogHandle();
 
-	IniFileExt ini(gPluginIniPath);
+	IniFileExt ini(to_string(gPluginIniPath));
 
 	if (ini.GetInteger("alwaysShow"))
 	{
-		if (ShowConfigUI(gPluginIniPath.c_str(), parentHwnd) == ERROR_CANCELLED)
+		if (ShowConfigUI(gPluginIniPath, parentHwnd) == ERROR_CANCELLED)
 			return 0; // no files to pack
 	}
 
 	wchar_t* curFile = AddList;
 	while (*curFile)
 	{
-		std::wstring destPath = PackedFile; // $mm TODO get dir name
-		destPath = destPath.substr(0, destPath.find_last_of(L'\\'));
+		std::wstring destPath = get_dirname(PackedFile);
 
 		if (!ConvertFile(SrcPath, curFile, destPath, (Flags &  PK_PACK_SAVE_PATHS) != 0, (Flags & PK_PACK_MOVE_FILES) != 0, ini))
 			return E_EABORTED;

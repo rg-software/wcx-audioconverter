@@ -1,7 +1,6 @@
 #pragma once
 #include <string>
 #include <minwindef.h>
-#include <wincon.h>
 
-std::string GetModulePath();
-DWORD ShowConfigUI(const char* iniPath, HWND Parent);
+std::wstring GetModulePath();
+DWORD ShowConfigUI(const std::wstring& iniPath, HWND Parent);

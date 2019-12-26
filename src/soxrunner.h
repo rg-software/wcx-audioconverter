@@ -1,14 +1,14 @@
 #pragma once
 #include <string>
 #include "inifileext.h"
-
-std::string GetModulePath();
+#include "guirunner.h"
+#include "utils.h"
 
 class SoxRunner
 {
 public:
 	SoxRunner(std::wstring& infile, std::wstring& outfile, IniFileExt& ini)
-		: mSoxPath(GetModulePath() + "Sox\\sox.exe")
+		: mSoxPath(GetModulePath() + L"Sox\\sox.exe")
 	{
 		mInfile = infile;
 		mOutfile = outfile;
@@ -57,7 +57,7 @@ private:
 		}
 	}
 
-	std::string mSoxPath;
+	std::wstring mSoxPath;
 	std::wstring mInfile, mOutfile;
 	int mChannels;
 	std::string mSampleRate;

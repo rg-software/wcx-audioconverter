@@ -46,6 +46,7 @@
     <ClInclude Include="src\inifileext.h" />
     <ClInclude Include="src\settingsdialog.h" />
     <ClInclude Include="src\soxrunner.h" />
+    <ClInclude Include="src\utils.h" />
   </ItemGroup>
   <PropertyGroup Label="Globals">
     <ProjectName>audioconverter</ProjectName>
