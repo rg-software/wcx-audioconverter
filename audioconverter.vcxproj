@@ -40,6 +40,13 @@
     <ClCompile Include="src\main.cpp" />
     <ClCompile Include="src\settingsdialog.cpp" />
   </ItemGroup>
+  <ItemGroup>
+    <ClInclude Include="src\gui.h" />
+    <ClInclude Include="src\guirunner.h" />
+    <ClInclude Include="src\inifileext.h" />
+    <ClInclude Include="src\settingsdialog.h" />
+    <ClInclude Include="src\soxrunner.h" />
+  </ItemGroup>
   <PropertyGroup Label="Globals">
     <ProjectName>audioconverter</ProjectName>
     <ProjectGuid>{546E5D91-8631-5380-BF07-6CC3AAF357B3}</ProjectGuid>

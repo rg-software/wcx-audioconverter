@@ -5,7 +5,8 @@
 #include <string>
 #include <wchar.h>
 #include "settingsdialog.h"
-#include <fstream>
+#include "soxrunner.h"
+#include "inifileext.h"
 
 int gArchive = 1;
 std::string gPluginIniPath;
@@ -44,7 +45,6 @@ wcx_export int __stdcall PackFiles(char* PackedFile, char* SubPath, char* SrcPat
 }
 
 // core functions
-
 tProcessDataProcW g_ProcessDataProc;
 DWORD ShowConfigUI(const char* iniPath, HWND Parent);
 
@@ -63,18 +63,10 @@ wcx_export void __stdcall SetProcessDataProcW(HANDLE hArcData, tProcessDataProcW
 	g_ProcessDataProc = pProcessDataProc;
 }
 
-extern HINSTANCE g_instance;
+std::string GetModulePath();
 wcx_export void __stdcall PackSetDefaultParams(PackDefaultParamStruct* dps)
 {	
-	wchar_t iniFilePath[MAX_PATH];
-	GetModuleFileName(g_instance, iniFilePath, MAX_PATH);
-	wchar_t* dot = wcsrchr(iniFilePath, L'.');
-	wcscpy(dot, L".ini");
-
-	char iniFilePathChars[MAX_PATH];
-	wcstombs(iniFilePathChars, iniFilePath, MAX_PATH);
-
-	gPluginIniPath = iniFilePathChars;
+	gPluginIniPath = GetModulePath() + "audioconverter.ini";
 }
 
 wcx_export void __stdcall ConfigurePacker(HWND Parent, HINSTANCE DllInstance) 
@@ -90,14 +82,6 @@ wcx_export int __stdcall GetPackerCaps()
 wcx_export int _stdcall GetBackgroundFlags()
 {
 	return BACKGROUND_PACK | BACKGROUND_UNPACK;	// MUST be thread-safe to show correct progress indicator (due to TC bug)
-}
-
-bool alwaysShow()
-{
-	mINI::INIFile iniFile(gPluginIniPath);
-	mINI::INIStructure ini;
-	iniFile.read(ini);
-	return std::atoi(ini[""]["alwaysShow"].c_str());
 }
 
 // unfortunately, there is no good way to find a parent window for our settings screen, so let's use a hack for now
@@ -131,26 +115,39 @@ HWND GetFileDialogHandle()
 // make SoX runner class
 // also, move ini file to the plugin location (though it is not recommended by Ghisler)
 
-bool ConvertFile(const std::wstring& srcPath, const std::wstring& filePath, const std::wstring& destPath, bool savePath, bool moveFile)
+std::string GetIniListOption(IniFileExt& ini, const std::string& key, const std::string& indexKey)
 {
-	/*
+	int index = ini.GetInteger(indexKey);
+	auto values = ini.GetStringList(key);
+	return values[index];
+}
+
+bool ConvertFile(const std::wstring& srcPath, const std::wstring& filePath, const std::wstring& destPath, bool savePath, bool moveFile, IniFileExt& ini)
+{
+	std::wstring fullFilePath = srcPath + L"\\" + filePath;
+
 	// first, skip directories (but create the same folder structure in the output directory)
-	var fullFilePath = srcPath + Path.DirectorySeparatorChar + filePath;
-	FileAttributes attr = File.GetAttributes(fullFilePath);
-	if ((attr & FileAttributes.Directory) == FileAttributes.Directory)
+	if((FILE_ATTRIBUTE_DIRECTORY & GetFileAttributes(fullFilePath.c_str())) == FILE_ATTRIBUTE_DIRECTORY)
 	{
 		if (savePath)
-			System.IO.Directory.CreateDirectory(destPath + Path.DirectorySeparatorChar + filePath);
-		return true; // not a file
+			CreateDirectory((destPath + L"\\" + filePath).c_str(), NULL);
+		return true;	// not a file
 	}
 
-
 	// prepare full input and output file names
-	var fileSize = (int)new System.IO.FileInfo(fullFilePath).Length;
-	string outExtension = "." + sd.GetOutputType().ToLower();
-	string outfileRelative = savePath ? filePath : Path.GetFileName(filePath);
-	string outfile = destPath + Path.DirectorySeparatorChar + Path.ChangeExtension(outfileRelative, outExtension);
+	//var fileSize = (int)new System.IO.FileInfo(fullFilePath).Length;
 
+	// use: changeExtension, getFilename
+	std::string outExtension = GetIniListOption(ini,  "fileTypes", "filetype");	// $mm TODO: TOLOWER!
+	std::wstring outfileRelative = savePath ? filePath : filePath.substr(filePath.find_last_of(L'\\' + 1));
+	std::wstring outfile = destPath + L"\\" + outfileRelative.substr(0, outfileRelative.find_last_of(L'.') + 1) + outExtension;
+
+	SoxRunner sr(fullFilePath, outfile, ini);
+
+	// $mm TODO: make it run in a background thread and update progress indicator periodically
+	sr.Process();
+
+/*	
 	// run Sox
 	var sr = new SoxRunner(fullFilePath, outfile, sd);
 	Thread caller = new Thread(new ThreadStart(sr.Process));
@@ -171,19 +168,20 @@ bool ConvertFile(const std::wstring& srcPath, const std::wstring& filePath, cons
 		}
 	}
 
+	*/
 	if (moveFile)
-		System.IO.File.Delete(fullFilePath);
+		DeleteFile(fullFilePath.c_str());
 
 	return true;
-	*/
-	return false;
 }
 
 wcx_export int __stdcall PackFilesW(wchar_t* PackedFile, wchar_t* SubPath, wchar_t* SrcPath, wchar_t* AddList, int Flags)
 {
 	HWND parentHwnd = GetFileDialogHandle();
 
-	if (alwaysShow())
+	IniFileExt ini(gPluginIniPath);
+
+	if (ini.GetInteger("alwaysShow"))
 	{
 		if (ShowConfigUI(gPluginIniPath.c_str(), parentHwnd) == ERROR_CANCELLED)
 			return 0; // no files to pack
@@ -195,7 +193,7 @@ wcx_export int __stdcall PackFilesW(wchar_t* PackedFile, wchar_t* SubPath, wchar
 		std::wstring destPath = PackedFile; // $mm TODO get dir name
 		destPath = destPath.substr(0, destPath.find_last_of(L'\\'));
 
-		if (!ConvertFile(SrcPath, curFile, destPath, (Flags &  PK_PACK_SAVE_PATHS) != 0, (Flags & PK_PACK_MOVE_FILES) != 0))
+		if (!ConvertFile(SrcPath, curFile, destPath, (Flags &  PK_PACK_SAVE_PATHS) != 0, (Flags & PK_PACK_MOVE_FILES) != 0, ini))
 			return E_EABORTED;
 
 		/*

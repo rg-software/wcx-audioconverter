@@ -1,10 +1,68 @@
 #pragma once
 #include <string>
+#include "inifileext.h"
+
+std::string GetModulePath();
+
 class SoxRunner
 {
 public:
-	//SoxRunner(std::string& infile, std::string& outfile)	// 
+	SoxRunner(std::wstring& infile, std::wstring& outfile, IniFileExt& ini)
+		: mSoxPath(GetModulePath() + "Sox\\sox.exe")
+	{
+		mInfile = infile;
+		mOutfile = outfile;
+		mSupportedTypes = ini.GetStringList("fileTypes");
+		mChannels = ini.GetInteger("isStereo") ? 2 : 1;
+		mSampleRate = ini.GetStringItem("sampleRates", "sampleRate");
 
+		if (ini.GetInteger("isNormalize"))
+			mCustomArgs += " --norm";
+
+		addCustomSettings(ini);
+	}
+
+	void Process()
+	{
+
+		size_t len = strlen(mCustomArgs.c_str());
+		WCHAR cust_args[1024];
+		int result = MultiByteToWideChar(CP_OEMCP, 0, mCustomArgs.c_str(), -1, cust_args, len + 1);
+
+
+		//for (const auto& var_type : mSupportedTypes)
+		{
+			std::wstring msg = mInfile + L" " + mOutfile + L" " + std::wstring(cust_args);
+			MessageBox(NULL, msg.c_str(), L"Message", MB_OK);
+
+		}
+		//	if (Infile.ToUpper().EndsWith("." + type)) // $mm TO RETURN
+			//{
+			//	SoxObject.OnProgress += Sox_OnProgress;
+			//	SoxObject.Process(Infile, Outfile);
+			//	break;
+			//}
+	}
+
+private:
+	void addCustomSettings(IniFileExt& ini)
+	{
+		// currently we only support MP3
+		if (ini.GetStringItem("fileTypes", "fileType") == std::string("MP3"))
+		{
+			if (ini.GetStringItem("mp3Modes", "mp3Mode") == std::string("CBR")) // set bitrate ("128", "256")
+				mCustomArgs += " -C " + ini.GetStringItem("mp3CbrBitrates", "mp3CbrBitrate");
+			else // VBR: set quality as -0..-9	// $mm TODO: double check!
+				mCustomArgs += " -C -" + std::to_string(ini.GetInteger("mp3VbrQuality") * 2);
+		}
+	}
+
+	std::string mSoxPath;
+	std::wstring mInfile, mOutfile;
+	int mChannels;
+	std::string mSampleRate;
+	std::vector<std::string> mSupportedTypes;
+	std::string mCustomArgs;
 /*
 	private Sox SoxObject;
 	private string Infile, Outfile;
@@ -13,39 +71,6 @@ public:
 	public int Progress{ get; private set; }
 	public bool Done{ get; private set; }
 
-		public SoxRunner(string infile, string outfile, SettingsDialog sd)
-	{
-		string soxPath = AppDomain.CurrentDomain.BaseDirectory + Path.DirectorySeparatorChar + "Sox" + Path.DirectorySeparatorChar + "sox.exe";
-
-		SoxObject = new Sox(soxPath);
-		Infile = infile;
-		Outfile = outfile;
-		Done = false;
-		Progress = 0;
-
-		// set global (format-independent) parameters
-		SupporedTypes = sd.SupportedTypes;
-		SoxObject.Output.SampleRate = sd.GetSamplingRate();
-		SoxObject.Output.Channels = sd.GetChannels();
-
-		if (sd.GetNormalize())
-			SoxObject.CustomArgs += " --norm";
-
-		// apply format-specific settings
-		AddCustomSettings(sd);
-	}
-
-	void AddCustomSettings(SettingsDialog sd)
-	{
-		// currently we only support MP3
-		if (sd.GetOutputType().Equals("MP3"))
-		{
-			if (sd.GetMp3Mode().Equals("CBR")) // set bitrate ("128", "256")
-				SoxObject.Output.CustomArgs += " -C " + sd.GetMp3CbrBitrate();
-			else // VBR: set quality as -0..-9
-				SoxObject.Output.CustomArgs += " -C -" + sd.GetMp3VbrQuality();
-		}
-	}
 
 	public void Process()
 	{

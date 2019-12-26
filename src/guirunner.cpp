@@ -4,10 +4,14 @@
 #include <wx/msw/wrapwin.h>
 #include <process.h>
 
+#include "guirunner.h"
 #include "settingsdialog.h"
 
-HINSTANCE g_instance = NULL;
-HANDLE g_act_ctx = NULL;
+namespace
+{
+	HINSTANCE g_instance = NULL;
+	HANDLE g_act_ctx = NULL;
+}
 
 class actctx_activator
 {
@@ -15,7 +19,7 @@ protected:
 	ULONG_PTR m_cookie; // Cookie for context deactivation
 
 public:
-	// Construct the activator and activates the given activation context
+	// Constructs the activator and activates the given activation context
 	actctx_activator(_In_ HANDLE hActCtx)
 	{
 		if (!ActivateActCtx(hActCtx, &m_cookie))
@@ -36,11 +40,8 @@ BOOL WINAPI DllMain(_In_ HINSTANCE hinstDLL, _In_ DWORD fdwReason, _In_ LPVOID l
 
 	if (fdwReason == DLL_PROCESS_ATTACH) 
 	{
-		// Save DLL's instance handle.
-		g_instance = hinstDLL;
-
-		// Save current activation context.
-		GetCurrentActCtx(&g_act_ctx);
+		g_instance = hinstDLL;			// Save DLL's instance handle
+		GetCurrentActCtx(&g_act_ctx);	// Save current activation context
 	}
 	else if (fdwReason == DLL_PROCESS_DETACH) 
 	{
@@ -53,30 +54,39 @@ BOOL WINAPI DllMain(_In_ HINSTANCE hinstDLL, _In_ DWORD fdwReason, _In_ LPVOID l
 
 DWORD ShowConfigUI(const char* iniPath, HWND Parent)
 {
-	// Restore plugin's activation context.
-	actctx_activator actctx(g_act_ctx);
+	actctx_activator actctx(g_act_ctx);	// Restore plugin's activation context
 
-	// Initialize application.
 	new wxApp();
 	wxEntryStart(g_instance);
 
 	int result;
 	{
-		// Create wxWidget-approved parent window.
-		wxWindow parent;
+		wxWindow parent;						// Create wxWidget-approved parent window
 		parent.SetHWND((WXHWND)Parent);
 		parent.AdoptAttributesFromHWND();
 		wxTopLevelWindows.Append(&parent);
 
-		// Create and launch configuration dialog.
-		SettingsDialog dlg(&parent, iniPath);
+		SettingsDialog dlg(&parent, iniPath);	// Create and launch configuration dialog
 		result = dlg.ShowModal();
 
 		wxTopLevelWindows.DeleteObject(&parent);
 		parent.SetHWND((WXHWND)NULL);
 	}
 
-	// Clean-up and return.
 	wxEntryCleanup();
 	return result == wxID_OK ? ERROR_SUCCESS : ERROR_CANCELLED;
+}
+
+std::string GetModulePath()
+{
+	wchar_t iniFilePath[MAX_PATH];
+	GetModuleFileName(g_instance, iniFilePath, MAX_PATH);
+	wchar_t* dot = wcsrchr(iniFilePath, L'\\');
+	dot[1] = 0;
+	//wcscpy(dot, L".ini");
+
+	char iniFilePathChars[MAX_PATH];
+	wcstombs(iniFilePathChars, iniFilePath, MAX_PATH);
+
+	return iniFilePathChars;
 }
