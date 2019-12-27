@@ -180,22 +180,20 @@ wcx_export int __stdcall PackFilesW(wchar_t* PackedFile, wchar_t* SubPath, wchar
 	wchar_t* curFile = AddList;
 	while (*curFile)
 	{
-		std::wstring destPath = get_dirname(PackedFile);
-
-		if (!ConvertFile(SrcPath, curFile, destPath, (Flags &  PK_PACK_SAVE_PATHS) != 0, (Flags & PK_PACK_MOVE_FILES) != 0, ini))
-			return E_EABORTED;
-
-		/*
 		std::wstring fullFilePath = std::wstring(SrcPath) + curFile;
-		MessageBox(NULL, fullFilePath.c_str(), L"", 0);
-
 		struct __stat64 buf;
 		int size = 0;
 		if (_wstat64(fullFilePath.c_str(), &buf) == 0)
 			size = buf.st_size;//MessageBox("File not found");//return -1; // error, could use errno to find out more
 
 		g_ProcessDataProc(curFile, size);
-		*/
+
+		std::wstring destPath = get_dirname(PackedFile);
+
+		if (!ConvertFile(SrcPath, curFile, destPath, (Flags &  PK_PACK_SAVE_PATHS) != 0, (Flags & PK_PACK_MOVE_FILES) != 0, ini))
+			return E_EABORTED;
+
+		
 		curFile += wcslen(curFile) + 1;
 	}
 	return 0;

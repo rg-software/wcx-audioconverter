@@ -9,21 +9,37 @@ inline std::string to_string(const std::wstring& s)
 	return std::string(&result[0]);
 }
 
+/*
+ 		size_t len = strlen(mCustomArgs.c_str());
+		WCHAR cust_args[1024];
+		int result = MultiByteToWideChar(CP_OEMCP, 0, mCustomArgs.c_str(), -1, cust_args, len + 1);
+*/
+
 inline std::wstring to_wstring(const std::string& s)
 {
 	return std::wstring(s.begin(), s.end());
 }
 
-inline std::string to_lower(const std::string& s)
+template<typename T> std::basic_string<T> to_lower(const std::basic_string<T>& s)
 {
-	std::string result;
+	std::basic_string<T> result;
 	std::transform(s.begin(), s.end(), std::back_inserter(result), ::tolower);
 	return result;
+}
+
+template<typename T> bool ends_with(const std::basic_string<T>& s, const std::basic_string<T>& tail)
+{
+	return s.substr(s.length() - tail.length()) == tail;
 }
 
 inline std::wstring change_extension(const std::wstring& path, const std::wstring& ext)
 {
 	return path.substr(0, path.find_last_of(L'.') + 1) + ext;
+}
+
+inline std::wstring quote(const std::wstring& s)
+{
+	return L"\"" + s + L"\"";
 }
 
 inline std::wstring get_filename(const std::wstring& path)

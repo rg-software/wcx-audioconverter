@@ -232,7 +232,7 @@
       <AdditionalIncludeDirectories>$(SHAREDLIBS_ROOT)\wxWidgets_3_1_0\include\msvc;$(SHAREDLIBS_ROOT)\wxWidgets_3_1_0\include;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
       <PreprocessorDefinitions>WIN32;_USRDLL;DLL_EXPORTS;_CRT_SECURE_NO_DEPRECATE=1;_CRT_NON_CONFORMING_SWPRINTFS=1;_SCL_SECURE_NO_WARNINGS=1;__WXMSW__;NDEBUG;_UNICODE;MY_DLL_BUILDING;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <ExceptionHandling>Sync</ExceptionHandling>
-      <RuntimeLibrary>MultiThreadedDLL</RuntimeLibrary>
+      <RuntimeLibrary>MultiThreaded</RuntimeLibrary>
       <RuntimeTypeInfo>true</RuntimeTypeInfo>
       <ObjectFileName>vc_mswu\my_dll\</ObjectFileName>
       <ProgramDataBaseFileName>vc_mswu\my_dll.pdb</ProgramDataBaseFileName>
@@ -393,10 +393,10 @@
     <ClCompile>
       <AdditionalOptions>/MP %(AdditionalOptions)</AdditionalOptions>
       <Optimization>MaxSpeed</Optimization>
-      <AdditionalIncludeDirectories>.\..\..\lib\vc_x64_lib\mswu;.\..\..\include;.;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>$(SHAREDLIBS_ROOT)\wxWidgets_3_1_0\include\msvc;$(SHAREDLIBS_ROOT)\wxWidgets_3_1_0\include;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
       <PreprocessorDefinitions>WIN32;_USRDLL;DLL_EXPORTS;_CRT_SECURE_NO_DEPRECATE=1;_CRT_NON_CONFORMING_SWPRINTFS=1;_SCL_SECURE_NO_WARNINGS=1;__WXMSW__;NDEBUG;_UNICODE;MY_DLL_BUILDING;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <ExceptionHandling>Sync</ExceptionHandling>
-      <RuntimeLibrary>MultiThreadedDLL</RuntimeLibrary>
+      <RuntimeLibrary>MultiThreaded</RuntimeLibrary>
       <RuntimeTypeInfo>true</RuntimeTypeInfo>
       <ObjectFileName>vc_mswu_x64\my_dll\</ObjectFileName>
       <ProgramDataBaseFileName>vc_mswu_x64\my_dll.pdb</ProgramDataBaseFileName>
@@ -414,7 +414,7 @@
       <OutputFile>vc_mswu_x64\my_dll.dll</OutputFile>
       <ImportLibrary>vc_mswu_x64\my_dll.lib</ImportLibrary>
       <SuppressStartupBanner>true</SuppressStartupBanner>
-      <AdditionalLibraryDirectories>.\..\..\lib\vc_x64_lib;%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
+      <AdditionalLibraryDirectories>$(SHAREDLIBS_ROOT)\wxWidgets_3_1_0\lib\vc_x64_lib;%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
       <GenerateDebugInformation>true</GenerateDebugInformation>
       <ProgramDatabaseFile>vc_mswu_x64\my_dll.pdb</ProgramDatabaseFile>
       <TargetMachine>MachineX64</TargetMachine>
