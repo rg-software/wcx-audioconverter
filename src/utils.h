@@ -44,7 +44,7 @@ inline std::wstring quote(const std::wstring& s)
 
 inline std::wstring get_filename(const std::wstring& path)
 {
-	return path.substr(path.find_last_of(L'\\' + 1));
+	return path.substr(path.find_last_of(L'\\') + 1);
 }
 
 inline std::wstring get_dirname(const std::wstring& path)

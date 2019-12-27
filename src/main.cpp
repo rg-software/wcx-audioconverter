@@ -132,6 +132,7 @@ bool ConvertFile(const std::wstring& srcPath, const std::wstring& filePath, cons
 	std::wstring outfileRelative = savePath ? filePath : get_filename(filePath);
 	std::wstring outfile = join_paths(destPath, change_extension(outfileRelative, outExtension));
 
+	//MessageBox(NULL, (fullFilePath + L" " + outfile).c_str(), L"Message", MB_OK);
 	SoxRunner sr(fullFilePath, outfile, ini);
 
 	// $mm TODO: make it run in a background thread and update progress indicator periodically
