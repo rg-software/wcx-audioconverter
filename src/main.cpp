@@ -165,17 +165,24 @@ bool ConvertFile(const std::wstring& srcPath, const std::wstring& filePath, cons
 	return true;
 }
 
+bool shouldShowConfigUI()
+{
+	IniFileExt ini(to_string(gPluginIniPath));
+	return ini.GetInteger("alwaysShow");
+}
+
 wcx_export int __stdcall PackFilesW(wchar_t* PackedFile, wchar_t* SubPath, wchar_t* SrcPath, wchar_t* AddList, int Flags)
 {
 	HWND parentHwnd = GetFileDialogHandle();
 
-	IniFileExt ini(to_string(gPluginIniPath));
-
-	if (ini.GetInteger("alwaysShow"))
+	// $mm here can be problems with multithreading due to a single config file
+	if (shouldShowConfigUI())
 	{
 		if (ShowConfigUI(gPluginIniPath, parentHwnd) == ERROR_CANCELLED)
 			return 0; // no files to pack
 	}
+
+	IniFileExt ini(to_string(gPluginIniPath));
 
 	wchar_t* curFile = AddList;
 	while (*curFile)
