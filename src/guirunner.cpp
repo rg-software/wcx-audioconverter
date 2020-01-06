@@ -52,7 +52,7 @@ BOOL WINAPI DllMain(_In_ HINSTANCE hinstDLL, _In_ DWORD fdwReason, _In_ LPVOID l
 	return TRUE;
 }
 
-DWORD ShowConfigUI(const std::wstring& iniPath, HWND Parent)
+DWORD ShowConfigUI(const std::string& iniPath, HWND Parent)
 {
 	actctx_activator actctx(g_act_ctx);	// Restore plugin's activation context
 
@@ -77,11 +77,11 @@ DWORD ShowConfigUI(const std::wstring& iniPath, HWND Parent)
 	return result == wxID_OK ? ERROR_SUCCESS : ERROR_CANCELLED;
 }
 
-std::wstring GetModulePath()	// keep backslash at the end
+std::string GetModulePath()	// keep backslash at the end
 {
-	wchar_t iniFilePath[MAX_PATH];
-	GetModuleFileName(g_instance, iniFilePath, MAX_PATH);
-	wchar_t* dot = wcsrchr(iniFilePath, L'\\');
+	char iniFilePath[MAX_PATH];
+	GetModuleFileNameA(g_instance, iniFilePath, MAX_PATH);
+	char* dot = strrchr(iniFilePath, '\\');
 	dot[1] = 0;
 	
 	return iniFilePath;

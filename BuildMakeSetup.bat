@@ -8,7 +8,7 @@ msbuild Audioconverter.sln /t:Build /p:Configuration=Release;Platform=Win32;UseE
 call "%VCINSTALLDIR%\Auxiliary\Build\vcvarsall.bat" x64
 msbuild Audioconverter.sln /t:Build /p:Configuration=Release;Platform=x64;UseEnv=true
 
-del /Q audioconverter.zip
+del /Q audio-converter.zip
 rmdir /S /Q ReleaseWCX
 
 mkdir ReleaseWCX
@@ -23,4 +23,4 @@ copy Readme.md ReleaseWCX\
 copy Screenshot.png ReleaseWCX\
 
 powershell.exe -nologo -noprofile -command "& { Add-Type -A 'System.IO.Compression.FileSystem'; [IO.Compression.ZipFile]::CreateFromDirectory('ReleaseWCX', 'audio-converter.zip'); }"
-echo Resulting file audioconverter.zip created!
+echo Resulting file audio-converter.zip created!

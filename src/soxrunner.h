@@ -28,7 +28,11 @@ public:
 			if(ends_with(to_lower(mInfile), to_lower(L"." + to_wstring(var_type))))
 			{
 				// cmdline must not be const for CreateProcess()
-				std::wstring soxLine = join_paths(mSoxPath, L"sox.exe");
+				std::wstring soxLine = join_paths(mSoxPath, std::wstring(L"sox.exe"));
+
+				// use "-S" first to display progress (last line: In:nn%)
+				// rely on https://docs.microsoft.com/en-us/windows/win32/procthread/creating-a-child-process-with-redirected-input-and-output
+				// for stderr redirection
 				std::wstring cmdLine = quote(soxLine) + L" " + quote(mInfile) + L" " + to_wstring(mCustomArgs) + L" " + quote(mOutfile);
 //				MessageBox(NULL, cmdLine.c_str(), L"Message", MB_OK);
 

@@ -2,8 +2,8 @@
 #include "utils.h"
 #include <sstream>
 
-SettingsDialog::SettingsDialog(wxWindow* parent, const std::wstring& iniPath)
-: SettingsDialogGui(parent), mConfig(to_string(iniPath))
+SettingsDialog::SettingsDialog(wxWindow* parent, const std::string& iniPath)
+: SettingsDialogGui(parent), mConfig(iniPath)
 {
 	setDialogItemFromConfig("alwaysShow", chkAlwaysShow);
 	setDialogItemFromConfig("isStereo", chkStereo);

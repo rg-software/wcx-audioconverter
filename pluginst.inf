@@ -1,6 +1,6 @@
 [plugininstall]
 description=Audioconverter plugin
 type=wcx
-file=audioconverter.wcx
-defaultdir=Audioconverter
+file=audio-converter.wcx
+defaultdir=Audio-converter
 defaultextension=Audio

@@ -11,7 +11,7 @@
 namespace
 {
 	int gArchive = 1;
-	std::wstring gPluginIniPath;
+	std::string gPluginIniPath;			// ini path is a std::string, all other filenames are std::wstring
 	tProcessDataProcW g_ProcessDataProc;
 	HWND foundFileDialogHWND;
 }
@@ -67,13 +67,18 @@ wcx_export void __stdcall SetProcessDataProcW(HANDLE /*hArcData*/, tProcessDataP
 
 wcx_export void __stdcall PackSetDefaultParams(PackDefaultParamStruct* dps)
 {	
-	gPluginIniPath = join_paths(get_dirname(to_wstring(dps->DefaultIniName)), L"audio-converter.ini");
+	gPluginIniPath = join_paths(get_dirname(std::string(dps->DefaultIniName)), std::string("audio-converter.ini"));
 
-	if(!file_exists(gPluginIniPath))
+	MessageBox(const_cast<char*>(gPluginIniPath.c_str()));
+
+	if(GetFileAttributesA(gPluginIniPath.c_str()) == INVALID_FILE_ATTRIBUTES)
 	{
 		// copy from our archive
-		std::wstring archiveIniPath = join_paths(GetModulePath(), L"audio-converter.ini");
-		CopyFile(archiveIniPath.c_str(), gPluginIniPath.c_str(), FALSE);
+		std::string archiveIniPath = join_paths(GetModulePath(), std::string("audio-converter.ini"));
+		
+		MessageBox(const_cast<char*>(archiveIniPath.c_str()));
+
+		CopyFileA(archiveIniPath.c_str(), gPluginIniPath.c_str(), FALSE);
 	}
 }
 
@@ -174,7 +179,7 @@ bool ConvertFile(const std::wstring& srcPath, const std::wstring& filePath, cons
 
 bool shouldShowConfigUI()
 {
-	IniFileExt ini(to_string(gPluginIniPath));
+	IniFileExt ini(gPluginIniPath);
 	return ini.GetInteger("alwaysShow");
 }
 
@@ -189,7 +194,7 @@ wcx_export int __stdcall PackFilesW(wchar_t* PackedFile, wchar_t* /*SubPath*/, w
 			return 0; // no files to pack
 	}
 
-	IniFileExt ini(to_string(gPluginIniPath));
+	IniFileExt ini(gPluginIniPath);
 
 	wchar_t* curFile = AddList;
 	while (*curFile)
@@ -202,7 +207,7 @@ wcx_export int __stdcall PackFilesW(wchar_t* PackedFile, wchar_t* /*SubPath*/, w
 
 		g_ProcessDataProc(curFile, size);
 
-		std::wstring destPath = get_dirname(PackedFile);
+		std::wstring destPath = get_dirname(std::wstring(PackedFile));
 
 		if (!ConvertFile(SrcPath, curFile, destPath, (Flags &  PK_PACK_SAVE_PATHS) != 0, (Flags & PK_PACK_MOVE_FILES) != 0, ini))
 			return E_EABORTED;
