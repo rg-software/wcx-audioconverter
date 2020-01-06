@@ -1,7 +1,6 @@
 #include <windows.h>
 #include "wcxhead.h"
 #include <cstddef>
-#include <cstdio>
 #include <string>
 #include <wchar.h>
 #include "settingsdialog.h"
@@ -17,35 +16,35 @@ namespace
 	HWND foundFileDialogHWND;
 }
 
-wcx_export HANDLE __stdcall OpenArchive(tOpenArchiveData* ArchiveData)
+wcx_export HANDLE __stdcall OpenArchive(tOpenArchiveData* /*ArchiveData*/)
 {
 	return &gArchive;
 }
 
-wcx_export int __stdcall ReadHeader(HANDLE hArcData, tHeaderData* HeaderData)
+wcx_export int __stdcall ReadHeader(HANDLE /*hArcData*/, tHeaderData* /*HeaderData*/)
 {
 	return E_BAD_ARCHIVE;
 }
 
-wcx_export int __stdcall ProcessFile(HANDLE hArcData, int Operation, char* DestPath, char* DestName)
+wcx_export int __stdcall ProcessFile(HANDLE /*hArcData*/, int /*Operation*/, char* /*DestPath*/, char* /*DestName*/)
 {
 	return E_BAD_ARCHIVE;
 }
 
-wcx_export int __stdcall CloseArchive(HANDLE hArcData) 
+wcx_export int __stdcall CloseArchive(HANDLE /*hArcData*/) 
 {
 	return E_SMALL_BUF;
 }
 
-wcx_export void __stdcall SetChangeVolProc(HANDLE hArcData, tChangeVolProc pChangeVolProc1) 
+wcx_export void __stdcall SetChangeVolProc(HANDLE /*hArcData*/, tChangeVolProc /*pChangeVolProc1*/) 
 {
 }
 
-wcx_export void __stdcall SetProcessDataProc(HANDLE hArcData, tProcessDataProc pProcessDataProc) 
+wcx_export void __stdcall SetProcessDataProc(HANDLE /*hArcData*/, tProcessDataProc /*pProcessDataProc*/) 
 {
 }
 
-wcx_export int __stdcall PackFiles(char* PackedFile, char* SubPath, char* SrcPath, char* AddList, int Flags)
+wcx_export int __stdcall PackFiles(char* /*PackedFile*/, char* /*SubPath*/, char* /*SrcPath*/, char* /*AddList*/, int /*Flags*/)
 {
 	return 0;
 }
@@ -57,21 +56,28 @@ void MessageBox(char *str)	// for debugging
 		return;
 	size_t len = strlen(str);
 	WCHAR unistring[1024];
-	int result = MultiByteToWideChar(CP_OEMCP, 0, str, -1, unistring, len + 1);
+	/*int result = */MultiByteToWideChar(CP_OEMCP, 0, str, -1, unistring, len + 1);
 	MessageBox(NULL, unistring, L"Message", MB_OK);
 }
 
-wcx_export void __stdcall SetProcessDataProcW(HANDLE hArcData, tProcessDataProcW pProcessDataProc) 
+wcx_export void __stdcall SetProcessDataProcW(HANDLE /*hArcData*/, tProcessDataProcW pProcessDataProc) 
 {
 	g_ProcessDataProc = pProcessDataProc;
 }
 
 wcx_export void __stdcall PackSetDefaultParams(PackDefaultParamStruct* dps)
 {	
-	gPluginIniPath = GetModulePath() + L"audioconverter.ini";
+	gPluginIniPath = join_paths(get_dirname(to_wstring(dps->DefaultIniName)), L"audio-converter.ini");
+
+	if(!file_exists(gPluginIniPath))
+	{
+		// copy from our archive
+		std::wstring archiveIniPath = join_paths(GetModulePath(), L"audio-converter.ini");
+		CopyFile(archiveIniPath.c_str(), gPluginIniPath.c_str(), FALSE);
+	}
 }
 
-wcx_export void __stdcall ConfigurePacker(HWND Parent, HINSTANCE DllInstance) 
+wcx_export void __stdcall ConfigurePacker(HWND Parent, HINSTANCE /*DllInstance*/) 
 {
 	ShowConfigUI(gPluginIniPath, Parent);
 }
@@ -87,7 +93,7 @@ wcx_export int _stdcall GetBackgroundFlags()
 }
 
 // unfortunately, there is no good way to find a parent window for our settings screen, so let's use a hack for now
-BOOL CALLBACK EnumWindowsProc(HWND hWnd, LPARAM lParam)
+BOOL CALLBACK EnumWindowsProc(HWND hWnd, LPARAM /*lParam*/)
 {
 	DWORD process;
 	GetWindowThreadProcessId(hWnd, &process);
@@ -172,7 +178,7 @@ bool shouldShowConfigUI()
 	return ini.GetInteger("alwaysShow");
 }
 
-wcx_export int __stdcall PackFilesW(wchar_t* PackedFile, wchar_t* SubPath, wchar_t* SrcPath, wchar_t* AddList, int Flags)
+wcx_export int __stdcall PackFilesW(wchar_t* PackedFile, wchar_t* /*SubPath*/, wchar_t* SrcPath, wchar_t* AddList, int Flags)
 {
 	HWND parentHwnd = GetFileDialogHandle();
 

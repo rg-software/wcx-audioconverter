@@ -2,6 +2,8 @@
 #include <string>
 #include <vector>
 
+// $mm TODO: make sure these string <-> wstring functions work correctly with non-Latin characters
+
 inline std::string to_string(const std::wstring& s)
 {
 	std::vector<char> result(s.length() + 1);
@@ -9,15 +11,13 @@ inline std::string to_string(const std::wstring& s)
 	return std::string(&result[0]);
 }
 
-/*
- 		size_t len = strlen(mCustomArgs.c_str());
-		WCHAR cust_args[1024];
-		int result = MultiByteToWideChar(CP_OEMCP, 0, mCustomArgs.c_str(), -1, cust_args, len + 1);
-*/
-
 inline std::wstring to_wstring(const std::string& s)
 {
-	return std::wstring(s.begin(), s.end());
+	int size_needed = MultiByteToWideChar(CP_UTF8, 0, &s[0], (int)s.size(), NULL, 0);
+	std::wstring wstrTo(size_needed, 0);
+	MultiByteToWideChar(CP_UTF8, 0, &s[0], (int)s.size(), &wstrTo[0], size_needed);
+	
+	return wstrTo;
 }
 
 template<typename T> std::basic_string<T> to_lower(const std::basic_string<T>& s)
@@ -57,4 +57,10 @@ inline std::wstring join_paths(const std::wstring& p1, const std::wstring& p2)
 	std::wstring sep = p1.back() == L'\\' ? L"" : L"\\";
 
 	return p1 + sep + p2;
+}
+
+inline bool file_exists(const std::wstring& path)
+{
+	struct __stat64 buf;
+	return _wstat64(path.c_str(), &buf) == 0;
 }
