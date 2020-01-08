@@ -22,39 +22,55 @@ public:
 		addCustomSettings(ini);
 	}
 
+	bool runSox()
+	{
+		// cmdline must not be const for CreateProcess()
+		std::wstring soxLine = join_paths(mSoxPath, std::wstring(L"sox.exe"));
+
+		// use "-S" first to display progress (last line: In:nn%)
+		// rely on https://docs.microsoft.com/en-us/windows/win32/procthread/creating-a-child-process-with-redirected-input-and-output
+		// for stderr redirection
+		std::wstring cmdLine = quote(soxLine) + L" " + quote(mInfile) + L" " + to_wstring(mCustomArgs) + L" " + quote(mOutfile);
+		//				MessageBox(NULL, cmdLine.c_str(), L"Message", MB_OK);
+
+		std::vector<wchar_t> cmdLineBuf(cmdLine.length() + 1);
+		std::fill_n(cmdLineBuf.begin(), cmdLine.length() + 1, L'\0');
+		std::copy_n(cmdLine.begin(), cmdLine.length(), cmdLineBuf.begin());
+
+		STARTUPINFO si;
+		PROCESS_INFORMATION pi;
+		ZeroMemory(&si, sizeof(si));
+		si.cb = sizeof(si);
+		ZeroMemory(&pi, sizeof(pi));
+
+		CreateProcess(soxLine.c_str(), &cmdLineBuf[0], NULL, NULL, false,
+			CREATE_NO_WINDOW, NULL, mSoxPath.c_str(), &si, &pi);
+
+		WaitForSingleObject(pi.hProcess, INFINITE);
+
+
+		DWORD exit_code;
+		GetExitCodeProcess(pi.hProcess, &exit_code);
+		CloseHandle(pi.hProcess);
+		CloseHandle(pi.hThread);
+
+		//	SoxObject.OnProgress += Sox_OnProgress;
+		//	SoxObject.Process(Infile, Outfile);
+
+		return exit_code == 0;
+	}
+
 	void Process()
 	{
 		for (const auto& var_type : mSupportedTypes)
 			if(ends_with(to_lower(mInfile), to_lower(L"." + to_wstring(var_type))))
 			{
-				// cmdline must not be const for CreateProcess()
-				std::wstring soxLine = join_paths(mSoxPath, std::wstring(L"sox.exe"));
+				if (!runSox() != 0)
+				{
+					// $mm TODO: return a proper error code instead of this box
+					MessageBox(NULL, L"Error", L"Error", 0);
+				}
 
-				// use "-S" first to display progress (last line: In:nn%)
-				// rely on https://docs.microsoft.com/en-us/windows/win32/procthread/creating-a-child-process-with-redirected-input-and-output
-				// for stderr redirection
-				std::wstring cmdLine = quote(soxLine) + L" " + quote(mInfile) + L" " + to_wstring(mCustomArgs) + L" " + quote(mOutfile);
-//				MessageBox(NULL, cmdLine.c_str(), L"Message", MB_OK);
-
-				std::vector<wchar_t> cmdLineBuf(cmdLine.length() + 1);
-				std::fill_n(cmdLineBuf.begin(), cmdLine.length() + 1, L'\0');
-				std::copy_n(cmdLine.begin(), cmdLine.length(), cmdLineBuf.begin());
-
-				STARTUPINFO si;
-				PROCESS_INFORMATION pi;
-				ZeroMemory(&si, sizeof(si));
-				si.cb = sizeof(si);
-				ZeroMemory(&pi, sizeof(pi));
-
-				CreateProcess(soxLine.c_str(), &cmdLineBuf[0], NULL, NULL, false,
-								CREATE_NO_WINDOW, NULL, mSoxPath.c_str(), &si, &pi);
-
-				WaitForSingleObject(pi.hProcess, INFINITE);
-				CloseHandle(pi.hProcess);
-				CloseHandle(pi.hThread);
-				
-				//	SoxObject.OnProgress += Sox_OnProgress;
-				//	SoxObject.Process(Infile, Outfile);
 				break;
 			}
 	}
