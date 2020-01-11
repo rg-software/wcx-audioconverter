@@ -13,6 +13,7 @@ public:
 
 private:
 	bool runSox();
+	void testPercents(const char* chBuf, const char* pPtr);
 	void buildCustomArgs(IniFileExt& ini);
 	void buildCommandLine(IniFileExt& ini);
 	void addCustomFlag(const std::string& flag);
