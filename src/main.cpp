@@ -69,15 +69,10 @@ wcx_export void __stdcall PackSetDefaultParams(PackDefaultParamStruct* dps)
 {	
 	gPluginIniPath = join_paths(get_dirname(std::string(dps->DefaultIniName)), std::string("audio-converter.ini"));
 
-	MessageBox(const_cast<char*>(gPluginIniPath.c_str()));
-
 	if(GetFileAttributesA(gPluginIniPath.c_str()) == INVALID_FILE_ATTRIBUTES)
 	{
 		// copy from our archive
 		std::string archiveIniPath = join_paths(GetModulePath(), std::string("audio-converter.ini"));
-		
-		MessageBox(const_cast<char*>(archiveIniPath.c_str()));
-
 		CopyFileA(archiveIniPath.c_str(), gPluginIniPath.c_str(), FALSE);
 	}
 }
@@ -132,49 +127,22 @@ bool ConvertFile(const std::wstring& srcPath, const std::wstring& filePath, cons
 	{
 		if (savePath)
 			CreateDirectory(join_paths(destPath, filePath).c_str(), NULL);
-		return true;	// not a file
+		return true;	// not a file (and not an error)
 	}
 
-	// prepare full input and output file names
-	//var fileSize = (int)new System.IO.FileInfo(fullFilePath).Length;
-
-	// use: changeExtension, getFilename
 	std::wstring outExtension = to_wstring(to_lower(ini.GetStringItem("fileTypes", "filetype")));
 	std::wstring outfileRelative = savePath ? filePath : get_filename(filePath);
 	std::wstring outfile = join_paths(destPath, change_extension(outfileRelative, outExtension));
 
-	//MessageBox(NULL, (fullFilePath + L" " + outfile).c_str(), L"Message", MB_OK);
 	SoxRunner sr(fullFilePath, outfile, ini);
 
 	// $mm TODO: make it run in a background thread and update progress indicator periodically
-	sr.Process();
+	bool result = sr.Process();
 
-/*	
-	// run Sox
-	var sr = new SoxRunner(fullFilePath, outfile, sd);
-	Thread caller = new Thread(new ThreadStart(sr.Process));
-	caller.Start();
-
-	// update progress bar until the process is finished
-	var prevProgress = 0;
-	while (!sr.Done)
-	{
-		Thread.Sleep(100);
-		var progress = (sr.Progress - prevProgress)*fileSize*0.01f;
-		prevProgress = sr.Progress;
-
-		if (ProcessDataProc(filePath, (int)progress) == 0)
-		{
-			sr.Abort();
-			return false;
-		}
-	}
-
-	*/
-	if (moveFile)
+	if (result && moveFile)	// delete source file in case of success only
 		DeleteFile(fullFilePath.c_str());
 
-	return true;
+	return result;
 }
 
 bool shouldShowConfigUI()
@@ -203,16 +171,18 @@ wcx_export int __stdcall PackFilesW(wchar_t* PackedFile, wchar_t* /*SubPath*/, w
 		struct __stat64 buf;
 		int size = 0;
 		if (_wstat64(fullFilePath.c_str(), &buf) == 0)
-			size = buf.st_size;//MessageBox("File not found");//return -1; // error, could use errno to find out more
-
-		g_ProcessDataProc(curFile, size);
+			size = buf.st_size; //MessageBox("File not found");//return -1; // error, could use errno to find out more
 
 		std::wstring destPath = get_dirname(std::wstring(PackedFile));
 
+		g_ProcessDataProc(curFile, 0);
 		if (!ConvertFile(SrcPath, curFile, destPath, (Flags &  PK_PACK_SAVE_PATHS) != 0, (Flags & PK_PACK_MOVE_FILES) != 0, ini))
+		{
+			MessageBox(parentHwnd, (std::wstring(L"Error processing file ") + curFile).c_str(), L"Audioconverter error", MB_ICONERROR);
 			return E_EABORTED;
+		}
+		g_ProcessDataProc(curFile, size);
 
-		
 		curFile += wcslen(curFile) + 1;
 	}
 	return 0;

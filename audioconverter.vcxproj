@@ -39,6 +39,7 @@
     <ClCompile Include="src\guirunner.cpp" />
     <ClCompile Include="src\main.cpp" />
     <ClCompile Include="src\settingsdialog.cpp" />
+    <ClCompile Include="src\soxrunner.cpp" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="src\gui.h" />

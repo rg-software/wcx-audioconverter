@@ -4,9 +4,9 @@
 
 inline std::wstring to_wstring(const std::string& s)
 {
-	int size = MultiByteToWideChar(CP_UTF8, 0, &s[0], s.size(), NULL, 0);	// should be ASCII anyway
+	auto size = MultiByteToWideChar(CP_UTF8, 0, &s[0], (int)s.size(), NULL, 0);	// should be ASCII anyway
 	std::wstring result(size, 0);
-	MultiByteToWideChar(CP_UTF8, 0, &s[0], s.size(), &result[0], size);
+	MultiByteToWideChar(CP_UTF8, 0, &s[0], (int)s.size(), &result[0], size);
 	
 	return result;
 }
