@@ -1,5 +1,10 @@
 #include <windows.h>
+
+#ifndef WCXHEAD_INCLUDED
+#define WCXHEAD_INCLUDED
 #include "wcxhead.h"
+#endif
+
 #include <cstddef>
 #include <string>
 #include <wchar.h>
@@ -118,15 +123,15 @@ HWND GetFileDialogHandle()
 	return foundFileDialogHWND;
 }
 
-bool ConvertFile(const std::wstring& srcPath, const std::wstring& filePath, const std::wstring& destPath, bool savePath, bool moveFile, IniFileExt& ini)
+bool ConvertFile(wchar_t* srcPath, wchar_t* filePath, std::wstring destPath, bool savePath, bool moveFile, IniFileExt& ini)
 {
-	std::wstring fullFilePath = join_paths(srcPath, filePath);
+	std::wstring fullFilePath = join_paths(std::wstring(srcPath), std::wstring(filePath));
 
 	// first, skip directories (but create the same folder structure in the output directory)
 	if((FILE_ATTRIBUTE_DIRECTORY & GetFileAttributes(fullFilePath.c_str())) == FILE_ATTRIBUTE_DIRECTORY)
 	{
 		if (savePath)
-			CreateDirectory(join_paths(destPath, filePath).c_str(), NULL);
+			CreateDirectory(join_paths(destPath, std::wstring(filePath)).c_str(), NULL);
 		return true;	// not a file (and not an error)
 	}
 
@@ -134,10 +139,7 @@ bool ConvertFile(const std::wstring& srcPath, const std::wstring& filePath, cons
 	std::wstring outfileRelative = savePath ? filePath : get_filename(filePath);
 	std::wstring outfile = join_paths(destPath, change_extension(outfileRelative, outExtension));
 
-	SoxRunner sr(fullFilePath, outfile, ini);
-
-	// $mm TODO: make it run in a background thread and update progress indicator periodically
-	bool result = sr.Process();
+	bool result = SoxRunner(srcPath, filePath, outfile, ini, g_ProcessDataProc).Process();
 
 	if (result && moveFile)	// delete source file in case of success only
 		DeleteFile(fullFilePath.c_str());
@@ -167,21 +169,13 @@ wcx_export int __stdcall PackFilesW(wchar_t* PackedFile, wchar_t* /*SubPath*/, w
 	wchar_t* curFile = AddList;
 	while (*curFile)
 	{
-		std::wstring fullFilePath = std::wstring(SrcPath) + curFile;
-		struct __stat64 buf;
-		int size = 0;
-		if (_wstat64(fullFilePath.c_str(), &buf) == 0)
-			size = buf.st_size; //MessageBox("File not found");//return -1; // error, could use errno to find out more
-
 		std::wstring destPath = get_dirname(std::wstring(PackedFile));
 
-		g_ProcessDataProc(curFile, 0);
 		if (!ConvertFile(SrcPath, curFile, destPath, (Flags &  PK_PACK_SAVE_PATHS) != 0, (Flags & PK_PACK_MOVE_FILES) != 0, ini))
 		{
 			MessageBox(parentHwnd, (std::wstring(L"Error processing file ") + curFile).c_str(), L"Audioconverter error", MB_ICONERROR);
 			return E_EABORTED;
 		}
-		g_ProcessDataProc(curFile, size);
 
 		curFile += wcslen(curFile) + 1;
 	}

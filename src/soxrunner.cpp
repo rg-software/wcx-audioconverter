@@ -1,9 +1,9 @@
 #include "soxrunner.h"
 
-SoxRunner::SoxRunner(std::wstring& infile, std::wstring& outfile, IniFileExt& ini)
-: mSoxFolder(join_paths(to_wstring(GetModulePath()), std::wstring(L"Sox")))
+SoxRunner::SoxRunner(wchar_t* srcPath, wchar_t* filePath, std::wstring& outfile, IniFileExt& ini, tProcessDataProcW processDataProc)
+: mSoxFolder(join_paths(to_wstring(GetModulePath()), std::wstring(L"Sox"))), mSrcPath(srcPath), mProcessDataProc(processDataProc)
 {
-	mInfile = infile;
+	mInfile = join_paths(std::wstring(srcPath), std::wstring(filePath));
 	mOutfile = outfile;
 	mSupportedTypes = ini.GetStringList("fileTypes");
 	buildCommandLine(ini);
@@ -50,117 +50,103 @@ void SoxRunner::addCustomArgument(const std::string& arg, int value)
 	addCustomArgument(arg, std::to_string(value));
 }
 
-void SoxRunner::testPercents(const char* chBuf, const char* pPtr)
+unsigned SoxRunner::extractPercents(unsigned prevValue, const char* chBuf)
 {
+	const char* pPtr = strrchr(chBuf, '%');
+
 	const char* cPtr = pPtr;
-	while(*cPtr != ':')
+	while (*cPtr != ':')
 	{
-		if (cPtr == pPtr)
-			return;	// not found
-		cPtr--;
+		if (cPtr-- == chBuf)
+			return prevValue;	// not found
 	}
 
 	cPtr++;
-	int result = 0;
 	if (isdigit(cPtr[0]) && isdigit(cPtr[1]) && isdigit(cPtr[2]))
-		result = 100;	// only 100 is 3-digit
-	else if (isdigit(cPtr[0]) && isdigit(cPtr[1]))
-		result = (cPtr[0] - '0') * 10 + (cPtr[1] - '0');
-	else if (isdigit(cPtr[0]))
-		result = cPtr[0] - '0';
-	else
-		return;
+		return 100;	// only 100 is 3-digit
+	if (isdigit(cPtr[0]) && isdigit(cPtr[1]))
+		return (cPtr[0] - '0') * 10 + (cPtr[1] - '0');
+	if (isdigit(cPtr[0]))
+		return cPtr[0] - '0';
 
-	std::ofstream os("testlog.txt", std::ios_base::app);
-	os << result << std::endl;
+	return prevValue;
 }
 
-bool SoxRunner::runSox()
+bool SoxRunner::runSox() const
 {
-	// cmdline must not be const for CreateProcess()
-	// use "-S" first to display progress (last line: In:nn%)
-	// rely on https://docs.microsoft.com/en-us/windows/win32/procthread/creating-a-child-process-with-redirected-input-and-output
-	// for stderr redirection
-	// also check these:
-	// https://stackoverflow.com/questions/14147138/capture-output-of-spawned-process-to-string#14149200
-	// https://stackoverflow.com/questions/28197891/win32-readfile-output-without-waiting-for-buffer
+	struct __stat64 buf;
+	long long fileSize = 0;
+	if (_wstat64(mInfile.c_str(), &buf) == 0)
+		fileSize = buf.st_size;
 
 	std::vector<wchar_t> cmdLineBuf(mCommandLine.length() + 1, L'\0');
 	std::copy_n(mCommandLine.begin(), mCommandLine.length(), cmdLineBuf.begin());
 
-	SECURITY_ATTRIBUTES saAttr;
-	saAttr.nLength = sizeof(SECURITY_ATTRIBUTES);
-	saAttr.bInheritHandle = TRUE;
-	saAttr.lpSecurityDescriptor = NULL;
+	HANDLE stderrReadHandle;
+	HANDLE stderrWriteHandle;
+	SECURITY_ATTRIBUTES saAttr = { sizeof(SECURITY_ATTRIBUTES), nullptr, TRUE };
 
-	HANDLE g_hChildStd_ERR_Wr, g_hChildStd_ERR_Rd;// = NULL;
-	CreatePipe(&g_hChildStd_ERR_Rd, &g_hChildStd_ERR_Wr, &saAttr, 0);
-	SetHandleInformation(g_hChildStd_ERR_Rd, HANDLE_FLAG_INHERIT, 0);
+	if (!CreatePipe(&stderrReadHandle, &stderrWriteHandle, &saAttr, 0))		return false;
+	if (!SetHandleInformation(stderrReadHandle, HANDLE_FLAG_INHERIT, 0))	return false;
 
-	STARTUPINFO si;
-	ZeroMemory(&si, sizeof(si));
-	si.cb = sizeof(si);
-	si.hStdError = g_hChildStd_ERR_Wr;
-	si.dwFlags |= STARTF_USESTDHANDLES;
+	PROCESS_INFORMATION piProcInfo;
+	ZeroMemory(&piProcInfo, sizeof(PROCESS_INFORMATION));
 
-	PROCESS_INFORMATION pi;
-	ZeroMemory(&pi, sizeof(pi));
+	STARTUPINFO siStartInfo;
+	ZeroMemory(&siStartInfo, sizeof(STARTUPINFO));
+	siStartInfo.cb = sizeof(STARTUPINFO);
+	siStartInfo.hStdError = stderrWriteHandle;
+	siStartInfo.hStdOutput = nullptr;
+	siStartInfo.hStdInput = nullptr;
+	siStartInfo.dwFlags |= STARTF_USESTDHANDLES;
 
-	CreateProcess(NULL, &cmdLineBuf[0], NULL, NULL, false, CREATE_NO_WINDOW, NULL, mSoxFolder.c_str(), &si, &pi);
+	if (!CreateProcess(nullptr, &cmdLineBuf[0], nullptr, nullptr, TRUE, CREATE_NO_WINDOW, nullptr, mSoxFolder.c_str(), &siStartInfo, &piProcInfo))
+		return false;
 
-	while (WAIT_TIMEOUT == WaitForSingleObject(pi.hProcess, 200))//INFINITE);
+	CloseHandle(piProcInfo.hThread);
+
+	const DWORD updIntervalMs = 100;
+	unsigned processedBytes = 0, prevPercent = 0, deltaProcessedBytes = 0;
+	bool userCancel = false;
+
+	// $mm NOTE: progress reporting is still broken
+	// but at least GUI is responsive now
+	// this code looks OK, but for some reason sox output is strange
+	// maybe I should make a SoX wrapper that serializes the output in a more reasonable manner
+
+	while (WAIT_TIMEOUT == WaitForSingleObject(piProcInfo.hProcess, updIntervalMs))
 	{
-		const int BUFSIZE = 500;
-		DWORD dwRead;//, dwWritten;
-		//CHAR chBuf[BUFSIZE];
-		BOOL tSuccess = FALSE, bSuccess = FALSE;
-		DWORD avail;
-		//for (;;)
-		{
-			tSuccess = PeekNamedPipe(g_hChildStd_ERR_Rd, NULL, 0, NULL, &avail, NULL);
-			if(tSuccess)
+		DWORD dataSize;
+		if (PeekNamedPipe(stderrReadHandle, nullptr, 0, nullptr, &dataSize, nullptr))
+			if (dataSize > 0)
 			{
-				//std::ofstream os("c:\\1\\testlog.txt", std::ios_base::app);
-				//os << avail << std::endl;
+				std::vector<char> buffer(dataSize + 1, 0);
+				if (ReadFile(stderrReadHandle, &buffer[0], dataSize, &dataSize, nullptr))
+				{
+					unsigned curPercent = extractPercents(prevPercent, &buffer[0]);
+					deltaProcessedBytes =  fileSize * (curPercent - prevPercent) / 100.0;
 
-				//std::vector<char> chBuf(avail);
-//$mm				bSuccess = ReadFile(g_hChildStd_OUT_Rd, &chBuf[0], avail, &dwRead, NULL);
-				//if (!bSuccess || dwRead == 0) break;
+					prevPercent = curPercent;
+					processedBytes += deltaProcessedBytes;
+					if (processedBytes > fileSize)
+						deltaProcessedBytes = 0;	// just in case to make sure we aren't over 100%
+				}
 
 			}
-			
-			
-//			if (tSuccess && avail >= BUFSIZE) {
-	//			while (avail >= BUFSIZE) {
-		//			//	std::string s(chBuf, dwRead);
-						//out += s;
-			//		avail = avail - BUFSIZE;
-				//}
-			//}
 
-			//bSuccess = ReadFile(g_hChildStd_OUT_Rd, chBuf, BUFSIZE, &dwRead, NULL);
-			//if (!bSuccess || dwRead == 0)
-			//	break;
-
-//			chBuf[dwRead] = 0;	// end of string
-	//		const char* p2 = strrchr(chBuf, '%');
-		//	if(p2 != nullptr)
-			//	testPercents(chBuf, p2);
-		}
+		if (!mProcessDataProc(mSrcPath, deltaProcessedBytes))
+			TerminateProcess(piProcInfo.hProcess, 1);
 	}
 
-	DWORD exit_code;
-	GetExitCodeProcess(pi.hProcess, &exit_code);
-	CloseHandle(pi.hProcess);
-	CloseHandle(pi.hThread);
-	CloseHandle(g_hChildStd_ERR_Wr);
-	CloseHandle(g_hChildStd_ERR_Rd);
-	//CloseHandle(g_hChildStd_OUT_Wr);
+	DWORD exitCode;
+	GetExitCodeProcess(piProcInfo.hProcess, &exitCode);
+	CloseHandle(stderrReadHandle);
+	CloseHandle(stderrWriteHandle);
 
-	return exit_code == 0;
+	return exitCode == 0 && mProcessDataProc(mSrcPath, fileSize);
 }
 
-bool SoxRunner::Process()
+bool SoxRunner::Process() const
 {
 	for (const auto& var_type : mSupportedTypes)
 		if (ends_with(to_lower(mInfile), to_lower(L"." + to_wstring(var_type))))
