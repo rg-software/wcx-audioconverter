@@ -12,9 +12,7 @@ del /Q audio-converter.zip
 rmdir /S /Q ReleaseWCX
 
 mkdir ReleaseWCX
-mkdir ReleaseWCX\sox
-
-copy sox-14.4.2\*.* ReleaseWCX\sox\
+copy ffmpeg.exe ReleaseWCX\
 copy vc_mswu_x64\my_dll.dll ReleaseWCX\audio-converter.wcx64
 copy vc_mswu\my_dll.dll ReleaseWCX\audio-converter.wcx
 copy audio-converter.ini ReleaseWCX\

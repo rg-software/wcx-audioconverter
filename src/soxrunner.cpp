@@ -1,7 +1,7 @@
 #include "soxrunner.h"
 
 SoxRunner::SoxRunner(wchar_t* srcPath, wchar_t* filePath, std::wstring& outfile, IniFileExt& ini, tProcessDataProcW processDataProc)
-: mSoxFolder(join_paths(to_wstring(GetModulePath()), std::wstring(L"Sox"))), mSrcPath(srcPath), mProcessDataProc(processDataProc)
+: mSoxFolder(join_paths(to_wstring(GetModulePath()), std::wstring(L"."))), mSrcPath(srcPath), mProcessDataProc(processDataProc)
 {
 	mInfile = join_paths(std::wstring(srcPath), std::wstring(filePath));
 	mOutfile = outfile;
@@ -12,7 +12,7 @@ SoxRunner::SoxRunner(wchar_t* srcPath, wchar_t* filePath, std::wstring& outfile,
 void SoxRunner::buildCommandLine(class IniFileExt& ini)
 {
 	buildCustomArgs(ini);
-	mCommandLine = quote(join_paths(mSoxFolder, std::wstring(L"sox.exe"))) + L" -S " +
+	mCommandLine = quote(join_paths(mSoxFolder, std::wstring(L"ffmpeg.exe"))) + L" -y -i " +
 				   quote(mInfile) + L" " + 
 				   to_wstring(mCustomArgs) + L" " +
 				   quote(mOutfile);
@@ -20,6 +20,7 @@ void SoxRunner::buildCommandLine(class IniFileExt& ini)
 
 void SoxRunner::buildCustomArgs(IniFileExt& ini)
 {
+	return;// $mm TO RETURN
 	if (ini.GetInteger("isNormalize"))
 		addCustomFlag("--norm");
 
@@ -50,26 +51,15 @@ void SoxRunner::addCustomArgument(const std::string& arg, int value)
 	addCustomArgument(arg, std::to_string(value));
 }
 
-unsigned SoxRunner::extractPercents(unsigned prevValue, const char* chBuf)
+unsigned SoxRunner::getTimeValue(unsigned prevValue, const char* pattern, const char* chBuf)
 {
-	const char* pPtr = strrchr(chBuf, '%');
+	const char* pPtr = strstr(chBuf, pattern);
+	int hh, mm, ss;
 
-	const char* cPtr = pPtr;
-	while (*cPtr != ':')
-	{
-		if (cPtr-- == chBuf)
-			return prevValue;	// not found
-	}
-
-	cPtr++;
-	if (isdigit(cPtr[0]) && isdigit(cPtr[1]) && isdigit(cPtr[2]))
-		return 100;	// only 100 is 3-digit
-	if (isdigit(cPtr[0]) && isdigit(cPtr[1]))
-		return (cPtr[0] - '0') * 10 + (cPtr[1] - '0');
-	if (isdigit(cPtr[0]))
-		return cPtr[0] - '0';
-
-	return prevValue;
+	if (pPtr == nullptr || sscanf(pPtr + strlen(pattern), "%02d:%02d:%02d", &hh, &mm, &ss) != 3)
+		return prevValue;
+	
+	return hh * 3600 + mm * 60 + ss;
 }
 
 bool SoxRunner::runSox() const
@@ -106,13 +96,10 @@ bool SoxRunner::runSox() const
 	CloseHandle(piProcInfo.hThread);
 
 	const DWORD updIntervalMs = 100;
-	unsigned processedBytes = 0, prevPercent = 0, deltaProcessedBytes = 0;
+	unsigned processedBytes = 0, prevTime = 0, deltaProcessedBytes = 0;
 	bool userCancel = false;
 
-	// $mm NOTE: progress reporting is still broken
-	// but at least GUI is responsive now
-	// this code looks OK, but for some reason sox output is strange
-	// maybe I should make a SoX wrapper that serializes the output in a more reasonable manner
+	unsigned infileDurationSec = 1, currentTime = 0;
 
 	while (WAIT_TIMEOUT == WaitForSingleObject(piProcInfo.hProcess, updIntervalMs))
 	{
@@ -123,19 +110,21 @@ bool SoxRunner::runSox() const
 				std::vector<char> buffer(dataSize + 1, 0);
 				if (ReadFile(stderrReadHandle, &buffer[0], dataSize, &dataSize, nullptr))
 				{
-					unsigned curPercent = extractPercents(prevPercent, &buffer[0]);
-					deltaProcessedBytes =  fileSize * (curPercent - prevPercent) / 100.0;
+					infileDurationSec = getTimeValue(infileDurationSec, "Duration: ", buffer.data());
+					currentTime = getTimeValue(currentTime, "time=", buffer.data());
 
-					prevPercent = curPercent;
+					deltaProcessedBytes =  fileSize * (currentTime - prevTime) / double(infileDurationSec);
+					if (processedBytes + deltaProcessedBytes > fileSize)	// to make sure we aren't over 100%
+						deltaProcessedBytes = fileSize - processedBytes;
+
+					prevTime = currentTime;
 					processedBytes += deltaProcessedBytes;
-					if (processedBytes > fileSize)
-						deltaProcessedBytes = 0;	// just in case to make sure we aren't over 100%
 				}
-
 			}
 
-		if (!mProcessDataProc(mSrcPath, deltaProcessedBytes))
+		if (!mProcessDataProc((WCHAR*)mInfile.c_str(), deltaProcessedBytes))
 			TerminateProcess(piProcInfo.hProcess, 1);
+		deltaProcessedBytes = 0;
 	}
 
 	DWORD exitCode;
@@ -143,7 +132,7 @@ bool SoxRunner::runSox() const
 	CloseHandle(stderrReadHandle);
 	CloseHandle(stderrWriteHandle);
 
-	return exitCode == 0 && mProcessDataProc(mSrcPath, fileSize);
+	return exitCode == 0 && mProcessDataProc((WCHAR*)mInfile.c_str(), fileSize - processedBytes);
 }
 
 bool SoxRunner::Process() const

@@ -15,12 +15,12 @@ The binary plugin archive comes with the setup script. Just enter the archive, a
 # Development
 The plugin has to be tested more thoroughly. Also we should add support for more file formats and format options. Contributions are welcome.
 
-The settings dialog is implemented in [wxWidgets](https://www.wxwidgets.org/). It is presumed that the library is located in `%SHAREDLIBS_ROOT%\wxWidgets_3_1_0`.
+The settings dialog is implemented in [wxWidgets](https://www.wxwidgets.org/). It is presumed that the library is located in `%SHAREDLIBS_ROOT%\wxWidgets_3_1_3`.
 
 Default setup scripts of wxWidgets provide 32-bit version of the library only. To build a 64-bit version, use the following commands:
 
 ```
-cd /d "%SHAREDLIBS_ROOT%\wxWidgets_3_1_0\build\msw"
+cd /d "%SHAREDLIBS_ROOT%\wxWidgets_3_1_3\build\msw"
 "%VCINSTALLDIR%\Auxiliary\Build\vcvarsall.bat" x64
 nmake /f makefile.vc TARGET_CPU=X64 RUNTIME_LIBS=static BUILD=release
 nmake /f makefile.vc TARGET_CPU=X64 RUNTIME_LIBS=static

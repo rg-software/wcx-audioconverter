@@ -19,7 +19,7 @@ public:
 
 private:
 	bool runSox() const;
-	static unsigned extractPercents(unsigned prevValue, const char* chBuf);
+	static unsigned getTimeValue(unsigned prevValue, const char* pattern, const char* chBuf);
 	void buildCustomArgs(IniFileExt& ini);
 	void buildCommandLine(IniFileExt& ini);
 	void addCustomFlag(const std::string& flag);
