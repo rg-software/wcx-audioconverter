@@ -11,14 +11,14 @@
 #include "guirunner.h"
 #include "utils.h"
 
-class SoxRunner
+class FfmpegRunner
 {
 public:
-	SoxRunner(wchar_t* srcPath, wchar_t* filePath, std::wstring& outfile, IniFileExt& ini, tProcessDataProcW processDataProc);
+	FfmpegRunner(wchar_t* srcPath, wchar_t* filePath, std::wstring& outfile, IniFileExt& ini, tProcessDataProcW processDataProc);
 	bool Process() const;
 
 private:
-	bool runSox() const;
+	bool runFfmpeg() const;
 	static unsigned getTimeValue(unsigned prevValue, const char* pattern, const char* chBuf);
 	void buildCustomArgs(IniFileExt& ini);
 	void buildCommandLine(IniFileExt& ini);
@@ -28,7 +28,7 @@ private:
 
 	tProcessDataProcW mProcessDataProc;
 	wchar_t* mSrcPath;
-	std::wstring mSoxFolder;
+	std::wstring mFfmpegFolder;
 	std::wstring mInfile, mOutfile;
 	std::vector<std::string> mSupportedTypes;
 	std::string mCustomArgs;

@@ -39,14 +39,14 @@
     <ClCompile Include="src\guirunner.cpp" />
     <ClCompile Include="src\main.cpp" />
     <ClCompile Include="src\settingsdialog.cpp" />
-    <ClCompile Include="src\soxrunner.cpp" />
+    <ClCompile Include="src\ffmpegrunner.cpp" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="src\gui.h" />
     <ClInclude Include="src\guirunner.h" />
     <ClInclude Include="src\inifileext.h" />
     <ClInclude Include="src\settingsdialog.h" />
-    <ClInclude Include="src\soxrunner.h" />
+    <ClInclude Include="src\ffmpegrunner.h" />
     <ClInclude Include="src\utils.h" />
   </ItemGroup>
   <PropertyGroup Label="Globals">

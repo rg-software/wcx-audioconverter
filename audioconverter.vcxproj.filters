@@ -19,7 +19,7 @@
     <ClCompile Include="src\main.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="src\soxrunner.cpp">
+    <ClCompile Include="src\ffmpegrunner.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
   </ItemGroup>
@@ -33,13 +33,13 @@
     <ClInclude Include="src\settingsdialog.h">
       <Filter>Source Files</Filter>
     </ClInclude>
-    <ClInclude Include="src\soxrunner.h">
-      <Filter>Source Files</Filter>
-    </ClInclude>
     <ClInclude Include="src\guirunner.h">
       <Filter>Source Files</Filter>
     </ClInclude>
     <ClInclude Include="src\utils.h">
+      <Filter>Source Files</Filter>
+    </ClInclude>
+    <ClInclude Include="src\ffmpegrunner.h">
       <Filter>Source Files</Filter>
     </ClInclude>
   </ItemGroup>

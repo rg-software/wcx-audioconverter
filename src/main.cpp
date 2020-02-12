@@ -9,7 +9,7 @@
 #include <string>
 #include <wchar.h>
 #include "settingsdialog.h"
-#include "soxrunner.h"
+#include "ffmpegrunner.h"
 #include "inifileext.h"
 #include "guirunner.h"
 
@@ -139,7 +139,7 @@ bool ConvertFile(wchar_t* srcPath, wchar_t* filePath, std::wstring destPath, boo
 	std::wstring outfileRelative = savePath ? filePath : get_filename(filePath);
 	std::wstring outfile = join_paths(destPath, change_extension(outfileRelative, outExtension));
 
-	bool result = SoxRunner(srcPath, filePath, outfile, ini, g_ProcessDataProc).Process();
+	bool result = FfmpegRunner(srcPath, filePath, outfile, ini, g_ProcessDataProc).Process();
 
 	if (result && moveFile)	// delete source file in case of success only
 		DeleteFile(fullFilePath.c_str());

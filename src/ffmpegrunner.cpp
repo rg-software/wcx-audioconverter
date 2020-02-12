@@ -1,7 +1,18 @@
-#include "soxrunner.h"
+// $mm TODO
+/*
+Handle options: -y or -n: rewrite/skip existing files (-n causes immediate exit with error)
+-ar[:stream_specifier] freq (input/output,per-stream)
+-aq q (output)
+Set the audio quality (codec-specific, VBR). This is an alias for -q:a.
+ffmpeg -i input.wav -filter:a loudnorm output.wav
 
-SoxRunner::SoxRunner(wchar_t* srcPath, wchar_t* filePath, std::wstring& outfile, IniFileExt& ini, tProcessDataProcW processDataProc)
-: mSoxFolder(join_paths(to_wstring(GetModulePath()), std::wstring(L"."))), mSrcPath(srcPath), mProcessDataProc(processDataProc)
+-ac[:stream_specifier] channels (input/output,per-stream)
+Set the number of audio channels.
+*/
+#include "ffmpegrunner.h"
+
+FfmpegRunner::FfmpegRunner(wchar_t* srcPath, wchar_t* filePath, std::wstring& outfile, IniFileExt& ini, tProcessDataProcW processDataProc)
+: mFfmpegFolder(join_paths(to_wstring(GetModulePath()), std::wstring(L"."))), mSrcPath(srcPath), mProcessDataProc(processDataProc)
 {
 	mInfile = join_paths(std::wstring(srcPath), std::wstring(filePath));
 	mOutfile = outfile;
@@ -9,16 +20,16 @@ SoxRunner::SoxRunner(wchar_t* srcPath, wchar_t* filePath, std::wstring& outfile,
 	buildCommandLine(ini);
 }
 
-void SoxRunner::buildCommandLine(class IniFileExt& ini)
+void FfmpegRunner::buildCommandLine(class IniFileExt& ini)
 {
 	buildCustomArgs(ini);
-	mCommandLine = quote(join_paths(mSoxFolder, std::wstring(L"ffmpeg.exe"))) + L" -y -i " +
+	mCommandLine = quote(join_paths(mFfmpegFolder, std::wstring(L"ffmpeg.exe"))) + L" -y -i " +
 				   quote(mInfile) + L" " + 
 				   to_wstring(mCustomArgs) + L" " +
 				   quote(mOutfile);
 }
 
-void SoxRunner::buildCustomArgs(IniFileExt& ini)
+void FfmpegRunner::buildCustomArgs(IniFileExt& ini)
 {
 	return;// $mm TO RETURN
 	if (ini.GetInteger("isNormalize"))
@@ -36,22 +47,22 @@ void SoxRunner::buildCustomArgs(IniFileExt& ini)
 	}
 }
 
-void SoxRunner::addCustomFlag(const std::string& flag)
+void FfmpegRunner::addCustomFlag(const std::string& flag)
 {
 	mCustomArgs += " " + flag;
 }
 
-void SoxRunner::addCustomArgument(const std::string& arg, const std::string& value)
+void FfmpegRunner::addCustomArgument(const std::string& arg, const std::string& value)
 {
 	mCustomArgs += " " + arg + " " + value;
 }
 
-void SoxRunner::addCustomArgument(const std::string& arg, int value)
+void FfmpegRunner::addCustomArgument(const std::string& arg, int value)
 {
 	addCustomArgument(arg, std::to_string(value));
 }
 
-unsigned SoxRunner::getTimeValue(unsigned prevValue, const char* pattern, const char* chBuf)
+unsigned FfmpegRunner::getTimeValue(unsigned prevValue, const char* pattern, const char* chBuf)
 {
 	const char* pPtr = strstr(chBuf, pattern);
 	int hh, mm, ss;
@@ -62,7 +73,7 @@ unsigned SoxRunner::getTimeValue(unsigned prevValue, const char* pattern, const 
 	return hh * 3600 + mm * 60 + ss;
 }
 
-bool SoxRunner::runSox() const
+bool FfmpegRunner::runFfmpeg() const
 {
 	struct __stat64 buf;
 	long long fileSize = 0;
@@ -90,7 +101,7 @@ bool SoxRunner::runSox() const
 	siStartInfo.hStdInput = nullptr;
 	siStartInfo.dwFlags |= STARTF_USESTDHANDLES;
 
-	if (!CreateProcess(nullptr, &cmdLineBuf[0], nullptr, nullptr, TRUE, CREATE_NO_WINDOW, nullptr, mSoxFolder.c_str(), &siStartInfo, &piProcInfo))
+	if (!CreateProcess(nullptr, &cmdLineBuf[0], nullptr, nullptr, TRUE, CREATE_NO_WINDOW, nullptr, mFfmpegFolder.c_str(), &siStartInfo, &piProcInfo))
 		return false;
 
 	CloseHandle(piProcInfo.hThread);
@@ -135,10 +146,10 @@ bool SoxRunner::runSox() const
 	return exitCode == 0 && mProcessDataProc((WCHAR*)mInfile.c_str(), fileSize - processedBytes);
 }
 
-bool SoxRunner::Process() const
+bool FfmpegRunner::Process() const
 {
 	for (const auto& var_type : mSupportedTypes)
 		if (ends_with(to_lower(mInfile), to_lower(L"." + to_wstring(var_type))))
-			return runSox();
+			return runFfmpeg();
 	return true;
 }
