@@ -2,6 +2,7 @@
 #include <wx/app.h> 
 #include <wx/dynlib.h>
 #include <wx/msw/wrapwin.h>
+#include <wx/fileconf.h>
 #include <process.h>
 
 #include "guirunner.h"

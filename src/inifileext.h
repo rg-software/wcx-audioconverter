@@ -9,19 +9,29 @@ public:
 		mIniFile.read(mIni);
     }
 
-	int GetInteger(const std::string& key)
+	std::string GetString(const std::string& key, const std::string& section = "")
+	{
+		return mIni[section][key];
+	}
+
+	void SetString(const std::string& key, const std::string& value, const std::string& section = "")
+	{
+		mIni[section][key] = value;
+	}
+
+	int GetInteger(const std::string& key, const std::string& section = "")
     {
-		return std::atoi(GetString(key).c_str());
+		return std::atoi(GetString(key, section).c_str());
     }
 
-	std::string GetString(const std::string& key)
-    {
-		return mIni[""][key];
-    }
+	void SetInteger(const std::string& key, int value, const std::string& section = "")
+	{
+		SetString(key, std::to_string(value), section);
+	}
 
-	std::vector<std::string> GetStringList(const std::string& key)
+	std::vector<std::string> GetStringList(const std::string& key, const std::string& section = "")
     {
-		std::string valueStr = GetString(key);
+		std::string valueStr = GetString(key, section);
 
 		std::stringstream ss(valueStr);
 		std::string token;
@@ -31,19 +41,9 @@ public:
 		return values;
     }
 
-	std::string GetStringItem(const std::string& listKey, const std::string& indexKey)
+	std::string GetStringItem(const std::string& listKey, const std::string& indexKey, const std::string& section = "")
     {
-		return GetStringList(listKey)[GetInteger(indexKey)];
-    }
-
-	void SetInteger(const std::string& key, int value)
-    {
-		SetString(key, std::to_string(value));
-    }
-
-	void SetString(const std::string& key, const std::string& value)
-    {
-		mIni[""][key] = value;
+		return GetStringList(listKey, section)[GetInteger(indexKey, section)];
     }
 
 	void Write()

@@ -17,10 +17,12 @@
 #include <wx/settings.h>
 #include <wx/choice.h>
 #include <wx/sizer.h>
-#include <wx/checkbox.h>
+#include <wx/panel.h>
 #include <wx/bitmap.h>
 #include <wx/image.h>
 #include <wx/icon.h>
+#include <wx/notebook.h>
+#include <wx/checkbox.h>
 #include <wx/button.h>
 #include <wx/dialog.h>
 
@@ -35,6 +37,8 @@ class SettingsDialogGui : public wxDialog
 	private:
 
 	protected:
+		wxNotebook* nbTabs;
+		wxPanel* m_panel1;
 		wxStaticText* m_staticText1;
 		wxChoice* cbFormats;
 		wxStaticText* m_staticText2;
@@ -45,6 +49,7 @@ class SettingsDialogGui : public wxDialog
 		wxChoice* cbMp3CbrRates;
 		wxStaticText* m_staticText5;
 		wxChoice* cbMp3VbrQuality;
+		wxPanel* m_panel2;
 		wxCheckBox* chkStereo;
 		wxCheckBox* chkNormalize;
 		wxCheckBox* chkAlwaysShow;
@@ -57,7 +62,7 @@ class SettingsDialogGui : public wxDialog
 
 	public:
 
-		SettingsDialogGui( wxWindow* parent, wxWindowID id = wxID_ANY, const wxString& title = wxT("Audioconverter"), const wxPoint& pos = wxDefaultPosition, const wxSize& size = wxSize( 622,257 ), long style = wxDEFAULT_DIALOG_STYLE );
+		SettingsDialogGui( wxWindow* parent, wxWindowID id = wxID_ANY, const wxString& title = wxT("Audioconverter"), const wxPoint& pos = wxDefaultPosition, const wxSize& size = wxSize( 622,312 ), long style = wxDEFAULT_DIALOG_STYLE );
 		~SettingsDialogGui();
 
 };

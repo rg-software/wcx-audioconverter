@@ -1,46 +1,90 @@
 #include "settingsdialog.h"
 #include "utils.h"
 #include <sstream>
+#include <wx/persist/treebook.h>
+#include <wx/persist.h>
+#include <wx/persist/toplevel.h>
+#include <wx/persist/window.h>
+#include <wx/wfstream.h>
 
 SettingsDialog::SettingsDialog(wxWindow* parent, const std::string& iniPath)
 : SettingsDialogGui(parent), mConfig(iniPath)
 {
-	setDialogItemFromConfig("alwaysShow", chkAlwaysShow);
-	setDialogItemFromConfig("isStereo", chkStereo);
-	setDialogItemFromConfig("isNormalize", chkNormalize);
-	setDialogItemFromConfig("fileTypes", "fileType", cbFormats);
-	setDialogItemFromConfig("sampleRates", "sampleRate", cbSamplingRate);
-	setDialogItemFromConfig("mp3Modes",  "mp3Mode", cbMp3Modes);
-	setDialogItemFromConfig("mp3CbrBitrates", "mp3CbrBitrate", cbMp3CbrRates);
-	setDialogItemFromConfig("mp3VbrQualities", "mp3VbrQuality", cbMp3VbrQuality);
+	mSavers = { std::make_pair("wxCheckBox", &SettingsDialog::saveCheckBox),
+				std::make_pair("wxChoice", &SettingsDialog::saveChoice) };
+
+	mLoaders = { std::make_pair("wxCheckBox", &SettingsDialog::loadCheckBox),
+				 std::make_pair("wxChoice", &SettingsDialog::loadChoice) };
+
+	loadChildren(this);
+}
+
+void SettingsDialog::loadChildren(wxWindow* parent)
+{
+	for (auto it : parent->GetChildren())
+	{
+		loadControl(it);
+		loadChildren(it);
+	}
+}
+
+void SettingsDialog::saveCheckBox(wxWindow* chkBox)
+{
+	wxCheckBox* cb = dynamic_cast<wxCheckBox*>(chkBox);
+	mConfig.SetInteger("IsChecked", cb->IsChecked(), cb->GetName().ToStdString());
+}
+
+void SettingsDialog::saveChoice(wxWindow* cbChoice)	// we need to save the current selection only
+{
+	wxChoice* cb = dynamic_cast<wxChoice*>(cbChoice);
+	mConfig.SetInteger("Selection", cb->GetSelection(), cb->GetName().ToStdString());
+}
+
+void SettingsDialog::loadCheckBox(wxWindow* chkBox)
+{
+	wxCheckBox* cb = dynamic_cast<wxCheckBox*>(chkBox);
+	cb->SetValue(mConfig.GetInteger("IsChecked", cb->GetName().ToStdString()));
+}
+
+void SettingsDialog::loadChoice(wxWindow* cbChoice)
+{
+	wxChoice* cb = dynamic_cast<wxChoice*>(cbChoice);
+	auto valueList = mConfig.GetStringList("Items", cb->GetName().ToStdString());
+
+	cb->Clear();
+	for (const auto& v : valueList)
+		cb->Append(v);
+	cb->SetSelection(mConfig.GetInteger("Selection", cb->GetName().ToStdString()));
+}
+
+void SettingsDialog::saveControl(wxWindow* ctrl)
+{
+	wxString className(ctrl->GetClassInfo()->GetClassName());
+	
+	if (mSavers.find(className) != mSavers.end())
+		mSavers.find(className)->second(this, ctrl);
+}
+
+void SettingsDialog::loadControl(wxWindow* ctrl)
+{
+	wxString className(ctrl->GetClassInfo()->GetClassName());
+
+	if (mLoaders.find(className) != mLoaders.end())
+		mLoaders.find(className)->second(this, ctrl);
+}
+
+void SettingsDialog::saveChildren(wxWindow* parent)
+{
+	for (auto it : parent->GetChildren())
+	{
+		saveControl(it);
+		saveChildren(it);
+	}
 }
 
 void SettingsDialog::btnOK_Click(wxCommandEvent &)
 {
-	mConfig.SetInteger("alwaysShow", chkAlwaysShow->IsChecked());
-	mConfig.SetInteger("isStereo", chkStereo->IsChecked());
-	mConfig.SetInteger("isNormalize", chkNormalize->IsChecked());
-	mConfig.SetInteger("fileType", cbFormats->GetSelection());
-	mConfig.SetInteger("sampleRate", cbSamplingRate->GetSelection());
-	mConfig.SetInteger("mp3Mode", cbMp3Modes->GetSelection());
-	mConfig.SetInteger("mp3CbrBitrate", cbMp3CbrRates->GetSelection());
-	mConfig.SetInteger("mp3VbrQuality", cbMp3VbrQuality->GetSelection());
+	saveChildren(this);
 	mConfig.Write();
 	EndModal(wxID_OK);
-}
-
-void SettingsDialog::setDialogItemFromConfig(const std::string& key, const std::string& defValueKey, wxChoice* cbChoice)
-{
-	int index = mConfig.GetInteger(defValueKey);
-	auto valueList = mConfig.GetStringList(key);
-
-	cbChoice->Clear();
-	for(const auto& v : valueList)
-		cbChoice->Append(v);
-	cbChoice->SetSelection(index);
-}
-
-void SettingsDialog::setDialogItemFromConfig(const std::string& key, wxCheckBox* chkBox)
-{
-	chkBox->SetValue(mConfig.GetInteger(key));
 }
