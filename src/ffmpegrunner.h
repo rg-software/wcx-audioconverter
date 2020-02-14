@@ -6,10 +6,12 @@
 #include "wcxhead.h"
 #endif
 
-#include <string>
 #include "inifileext.h"
 #include "guirunner.h"
 #include "utils.h"
+#include <string>
+#include <map>
+#include <functional>
 
 class FfmpegRunner
 {
@@ -20,12 +22,13 @@ public:
 private:
 	bool runFfmpeg() const;
 	static unsigned getTimeValue(unsigned prevValue, const char* pattern, const char* chBuf);
-	void buildCustomArgs(IniFileExt& ini);
 	void buildCommandLine(IniFileExt& ini);
 	void addCustomFlag(const std::string& flag);
 	void addCustomArgument(const std::string& arg, const std::string& value);
 	void addCustomArgument(const std::string& arg, int value);
+	void addCustomArgsMP3(IniFileExt& ini);
 
+	std::map<std::string, std::function<void(FfmpegRunner*, IniFileExt &)>> mCustomArgsAdders;
 	tProcessDataProcW mProcessDataProc;
 	wchar_t* mSrcPath;
 	std::wstring mFfmpegFolder;

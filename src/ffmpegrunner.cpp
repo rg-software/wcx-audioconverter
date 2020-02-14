@@ -11,40 +11,46 @@ Set the number of audio channels.
 */
 #include "ffmpegrunner.h"
 
+// $MM TODO: sampling rate should be global (?)
+// stereo channel should be global
+// output file extension should be decided with the current tab
+// "cbformats" should be used ONLY to decide which input files are eligible
+
 FfmpegRunner::FfmpegRunner(wchar_t* srcPath, wchar_t* filePath, std::wstring& outfile, IniFileExt& ini, tProcessDataProcW processDataProc)
 : mFfmpegFolder(join_paths(to_wstring(GetModulePath()), std::wstring(L"."))), mSrcPath(srcPath), mProcessDataProc(processDataProc)
 {
+	mCustomArgsAdders = { std::make_pair("MP3", &FfmpegRunner::addCustomArgsMP3) };
+
 	mInfile = join_paths(std::wstring(srcPath), std::wstring(filePath));
 	mOutfile = outfile;
-	mSupportedTypes = ini.GetStringList("fileTypes");
+	mSupportedTypes = ini.GetStringList("Items", "cbFormats");	// $mm TODO: rename
 	buildCommandLine(ini);
+
+	MessageBox(0, mCommandLine.c_str(), L"", 0);
 }
 
 void FfmpegRunner::buildCommandLine(class IniFileExt& ini)
 {
-	buildCustomArgs(ini);
+	std::string currentTab = ini.GetStringItem("Items", "Selection", "nbTabs");
+
+	if (mCustomArgsAdders.find(currentTab) != mCustomArgsAdders.end())
+		mCustomArgsAdders.find(currentTab)->second(this, ini);
+
 	mCommandLine = quote(join_paths(mFfmpegFolder, std::wstring(L"ffmpeg.exe"))) + L" -y -i " +
 				   quote(mInfile) + L" " + 
 				   to_wstring(mCustomArgs) + L" " +
 				   quote(mOutfile);
 }
 
-void FfmpegRunner::buildCustomArgs(IniFileExt& ini)
+void FfmpegRunner::addCustomArgsMP3(IniFileExt& ini)
 {
-	return;// $mm TO RETURN
-	if (ini.GetInteger("isNormalize"))
-		addCustomFlag("--norm");
+	addCustomArgument("-codec:a", "libmp3lame");
+	addCustomArgument("-ar", ini.GetStringItem("Items", "Selection", "cbSamplingRate"));
 
-	// currently we only support MP3
-	if (ini.GetStringItem("fileTypes", "fileType") == std::string("MP3"))
-	{
-		addCustomArgument("--channels", ini.GetInteger("isStereo") ? 2 : 1);
-
-		if (ini.GetStringItem("mp3Modes", "mp3Mode") == std::string("CBR")) // set bitrate ("128", "256")
-			addCustomArgument("-C", ini.GetStringItem("mp3CbrBitrates", "mp3CbrBitrate"));
-		else // VBR: set quality as -0..-9	// $mm TODO: double check!
-			addCustomArgument("-C", std::to_string(ini.GetInteger("mp3VbrQuality") * 2));
-	}
+	if (ini.GetStringItem("Items", "Selection", "cbMp3Modes") == "CBR")
+		addCustomArgument("-b:a", ini.GetStringItem("Items", "Selection", "cbMp3CbrRates"));
+	else // for VBR
+		addCustomArgument("-qscale:a", ini.GetInteger("Selection", "cbMp3VbrQuality") * 2); // range is 0-9 where a lower value is a higher quality
 }
 
 void FfmpegRunner::addCustomFlag(const std::string& flag)

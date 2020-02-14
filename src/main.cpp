@@ -135,9 +135,12 @@ bool ConvertFile(wchar_t* srcPath, wchar_t* filePath, std::wstring destPath, boo
 		return true;	// not a file (and not an error)
 	}
 
-	std::wstring outExtension = to_wstring(to_lower(ini.GetStringItem("fileTypes", "filetype")));
+	// $MM TODO: note that out extension is DIFFERENT from current tab, so we should have a list of associated extensions with a tab 
+	// (or perhaps this extension should be set inside the tab code)
+	std::wstring outExtension = to_wstring(to_lower(ini.GetStringItem("Items", "Selection", "cbFormats"))); // $mm TODO: rename
 	std::wstring outfileRelative = savePath ? filePath : get_filename(filePath);
 	std::wstring outfile = join_paths(destPath, change_extension(outfileRelative, outExtension));
+
 
 	bool result = FfmpegRunner(srcPath, filePath, outfile, ini, g_ProcessDataProc).Process();
 

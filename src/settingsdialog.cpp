@@ -11,10 +11,12 @@ SettingsDialog::SettingsDialog(wxWindow* parent, const std::string& iniPath)
 : SettingsDialogGui(parent), mConfig(iniPath)
 {
 	mSavers = { std::make_pair("wxCheckBox", &SettingsDialog::saveCheckBox),
-				std::make_pair("wxChoice", &SettingsDialog::saveChoice) };
+				std::make_pair("wxChoice", &SettingsDialog::saveChoice),
+				std::make_pair("wxNotebook", &SettingsDialog::saveNotebook) };
 
 	mLoaders = { std::make_pair("wxCheckBox", &SettingsDialog::loadCheckBox),
-				 std::make_pair("wxChoice", &SettingsDialog::loadChoice) };
+				 std::make_pair("wxChoice", &SettingsDialog::loadChoice),
+				 std::make_pair("wxNotebook", &SettingsDialog::loadNotebook) };
 
 	loadChildren(this);
 }
@@ -40,6 +42,12 @@ void SettingsDialog::saveChoice(wxWindow* cbChoice)	// we need to save the curre
 	mConfig.SetInteger("Selection", cb->GetSelection(), cb->GetName().ToStdString());
 }
 
+void SettingsDialog::saveNotebook(wxWindow* book)
+{
+	wxNotebook* wb = dynamic_cast<wxNotebook*>(book);
+	mConfig.SetInteger("Selection", wb->GetSelection(), wb->GetName().ToStdString());
+}
+
 void SettingsDialog::loadCheckBox(wxWindow* chkBox)
 {
 	wxCheckBox* cb = dynamic_cast<wxCheckBox*>(chkBox);
@@ -55,6 +63,12 @@ void SettingsDialog::loadChoice(wxWindow* cbChoice)
 	for (const auto& v : valueList)
 		cb->Append(v);
 	cb->SetSelection(mConfig.GetInteger("Selection", cb->GetName().ToStdString()));
+}
+
+void SettingsDialog::loadNotebook(wxWindow* book)
+{
+	wxNotebook* wb = dynamic_cast<wxNotebook*>(book);
+	wb->SetSelection(mConfig.GetInteger("Selection", wb->GetName().ToStdString()));
 }
 
 void SettingsDialog::saveControl(wxWindow* ctrl)

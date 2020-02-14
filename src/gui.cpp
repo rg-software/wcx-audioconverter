@@ -16,19 +16,10 @@ SettingsDialogGui::SettingsDialogGui( wxWindow* parent, wxWindowID id, const wxS
 	wxBoxSizer* bSizer1;
 	bSizer1 = new wxBoxSizer( wxVERTICAL );
 
-	nbTabs = new wxNotebook( this, wxID_ANY, wxDefaultPosition, wxDefaultSize, 0 );
+	nbTabs = new wxNotebook( this, wxID_ANY, wxDefaultPosition, wxDefaultSize, 0, wxT("nbTabs") );
 	m_panel1 = new wxPanel( nbTabs, wxID_ANY, wxDefaultPosition, wxDefaultSize, wxTAB_TRAVERSAL );
 	wxGridSizer* gSizer1;
-	gSizer1 = new wxGridSizer( 3, 4, 0, 0 );
-
-	m_staticText1 = new wxStaticText( m_panel1, wxID_ANY, wxT("Target format"), wxDefaultPosition, wxDefaultSize, 0 );
-	m_staticText1->Wrap( -1 );
-	gSizer1->Add( m_staticText1, 0, wxALL|wxALIGN_CENTER_VERTICAL, 5 );
-
-	wxArrayString cbFormatsChoices;
-	cbFormats = new wxChoice( m_panel1, wxID_ANY, wxDefaultPosition, wxDefaultSize, cbFormatsChoices, 0, wxDefaultValidator, wxT("cbFormats") );
-	cbFormats->SetSelection( 0 );
-	gSizer1->Add( cbFormats, 0, wxALL|wxALIGN_CENTER_VERTICAL, 5 );
+	gSizer1 = new wxGridSizer( 2, 4, 0, 0 );
 
 	m_staticText2 = new wxStaticText( m_panel1, wxID_ANY, wxT("MP3 mode"), wxDefaultPosition, wxDefaultSize, 0 );
 	m_staticText2->Wrap( -1 );
@@ -57,12 +48,6 @@ SettingsDialogGui::SettingsDialogGui( wxWindow* parent, wxWindowID id, const wxS
 	cbMp3CbrRates->SetSelection( 0 );
 	gSizer1->Add( cbMp3CbrRates, 0, wxALL|wxALIGN_CENTER_VERTICAL, 5 );
 
-
-	gSizer1->Add( 0, 0, 1, wxEXPAND, 5 );
-
-
-	gSizer1->Add( 0, 0, 1, wxEXPAND, 5 );
-
 	m_staticText5 = new wxStaticText( m_panel1, wxID_ANY, wxT("MP3 VBR quality"), wxDefaultPosition, wxDefaultSize, 0 );
 	m_staticText5->Wrap( -1 );
 	gSizer1->Add( m_staticText5, 0, wxALL|wxALIGN_CENTER_VERTICAL, 5 );
@@ -78,14 +63,14 @@ SettingsDialogGui::SettingsDialogGui( wxWindow* parent, wxWindowID id, const wxS
 	gSizer1->Fit( m_panel1 );
 	nbTabs->AddPage( m_panel1, wxT("MP3"), true );
 	m_panel2 = new wxPanel( nbTabs, wxID_ANY, wxDefaultPosition, wxDefaultSize, wxTAB_TRAVERSAL );
-	nbTabs->AddPage( m_panel2, wxT("a page"), false );
+	nbTabs->AddPage( m_panel2, wxT("OGG"), false );
 
 	bSizer1->Add( nbTabs, 1, wxEXPAND | wxALL, 5 );
 
-	chkStereo = new wxCheckBox( this, wxID_ANY, wxT("Stereo"), wxDefaultPosition, wxDefaultSize, 0, wxDefaultValidator, wxT("chkStereo") );
+	chkStereo = new wxCheckBox( this, wxID_ANY, wxT("Stereo (Remove?)"), wxDefaultPosition, wxDefaultSize, 0, wxDefaultValidator, wxT("chkStereo") );
 	bSizer1->Add( chkStereo, 0, wxALL, 5 );
 
-	chkNormalize = new wxCheckBox( this, wxID_ANY, wxT("Normalize"), wxDefaultPosition, wxDefaultSize, 0, wxDefaultValidator, wxT("chkNormalize") );
+	chkNormalize = new wxCheckBox( this, wxID_ANY, wxT("Normalize (Remove?)"), wxDefaultPosition, wxDefaultSize, 0, wxDefaultValidator, wxT("chkNormalize") );
 	bSizer1->Add( chkNormalize, 0, wxALL, 5 );
 
 	wxBoxSizer* bSizer2;

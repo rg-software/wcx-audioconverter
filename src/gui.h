@@ -39,8 +39,6 @@ class SettingsDialogGui : public wxDialog
 	protected:
 		wxNotebook* nbTabs;
 		wxPanel* m_panel1;
-		wxStaticText* m_staticText1;
-		wxChoice* cbFormats;
 		wxStaticText* m_staticText2;
 		wxChoice* cbMp3Modes;
 		wxStaticText* m_staticText3;
