@@ -102,3 +102,13 @@ void SettingsDialog::btnOK_Click(wxCommandEvent &)
 	mConfig.Write();
 	EndModal(wxID_OK);
 }
+
+void SettingsDialog::cbMp3Cbr_Click(wxCommandEvent& event) 
+{
+	cbMp3Vbr->SetValue(!cbMp3Cbr->GetValue());
+}
+
+void SettingsDialog::cbMp3Vbr_Click(wxCommandEvent& event)
+{ 
+	cbMp3Cbr->SetValue(!cbMp3Vbr->GetValue());
+}

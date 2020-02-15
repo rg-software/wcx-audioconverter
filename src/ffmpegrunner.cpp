@@ -1,56 +1,46 @@
-// $mm TODO
-/*
-Handle options: -y or -n: rewrite/skip existing files (-n causes immediate exit with error)
--ar[:stream_specifier] freq (input/output,per-stream)
--aq q (output)
-Set the audio quality (codec-specific, VBR). This is an alias for -q:a.
-ffmpeg -i input.wav -filter:a loudnorm output.wav
-
--ac[:stream_specifier] channels (input/output,per-stream)
-Set the number of audio channels.
-*/
 #include "ffmpegrunner.h"
-
-// $MM TODO: sampling rate should be global (?)
-// stereo channel should be global
-// output file extension should be decided with the current tab
-// "cbformats" should be used ONLY to decide which input files are eligible
 
 FfmpegRunner::FfmpegRunner(wchar_t* srcPath, wchar_t* filePath, std::wstring& outfile, IniFileExt& ini, tProcessDataProcW processDataProc)
 : mFfmpegFolder(join_paths(to_wstring(GetModulePath()), std::wstring(L"."))), mSrcPath(srcPath), mProcessDataProc(processDataProc)
 {
+	// here outfile still has its original extension
 	mCustomArgsAdders = { std::make_pair("MP3", &FfmpegRunner::addCustomArgsMP3) };
 
-	mInfile = join_paths(std::wstring(srcPath), std::wstring(filePath));
-	mOutfile = outfile;
-	mSupportedTypes = ini.GetStringList("Items", "cbFormats");	// $mm TODO: rename
-	buildCommandLine(ini);
-
-	MessageBox(0, mCommandLine.c_str(), L"", 0);
-}
-
-void FfmpegRunner::buildCommandLine(class IniFileExt& ini)
-{
 	std::string currentTab = ini.GetStringItem("Items", "Selection", "nbTabs");
-
+	std::wstring outExtension = L"out";
+	
 	if (mCustomArgsAdders.find(currentTab) != mCustomArgsAdders.end())
-		mCustomArgsAdders.find(currentTab)->second(this, ini);
+		outExtension = mCustomArgsAdders.find(currentTab)->second(this, ini);
+
+	mSupportedTypes = ini.GetStringList("Items", "Extensions");
+	mInfile = join_paths(std::wstring(srcPath), std::wstring(filePath));
+	mOutfile = change_extension(outfile, outExtension);
 
 	mCommandLine = quote(join_paths(mFfmpegFolder, std::wstring(L"ffmpeg.exe"))) + L" -y -i " +
-				   quote(mInfile) + L" " + 
-				   to_wstring(mCustomArgs) + L" " +
-				   quote(mOutfile);
+		quote(mInfile) + L" " +
+		to_wstring(mCustomArgs) + L" " +
+		quote(mOutfile);
+
+
+	// MessageBox(0, mCommandLine.c_str(), L"", 0);
 }
 
-void FfmpegRunner::addCustomArgsMP3(IniFileExt& ini)
+void FfmpegRunner::addCustomArgsGlobal(IniFileExt& ini)
+{
+	addCustomArgument("-ar", ini.GetStringItem("Items", "Selection", "cbSamplingRate"));
+	addCustomArgument("-ac", ini.GetInteger("IsChecked", "chkStereo") ? 2 : 1);
+}
+
+std::wstring FfmpegRunner::addCustomArgsMP3(IniFileExt& ini)
 {
 	addCustomArgument("-codec:a", "libmp3lame");
-	addCustomArgument("-ar", ini.GetStringItem("Items", "Selection", "cbSamplingRate"));
 
-	if (ini.GetStringItem("Items", "Selection", "cbMp3Modes") == "CBR")
+	if (ini.GetInteger("IsChecked", "cbMp3Cbr"))
 		addCustomArgument("-b:a", ini.GetStringItem("Items", "Selection", "cbMp3CbrRates"));
 	else // for VBR
 		addCustomArgument("-qscale:a", ini.GetInteger("Selection", "cbMp3VbrQuality") * 2); // range is 0-9 where a lower value is a higher quality
+
+	return L"mp3";
 }
 
 void FfmpegRunner::addCustomFlag(const std::string& flag)
@@ -114,8 +104,6 @@ bool FfmpegRunner::runFfmpeg() const
 
 	const DWORD updIntervalMs = 100;
 	unsigned processedBytes = 0, prevTime = 0, deltaProcessedBytes = 0;
-	bool userCancel = false;
-
 	unsigned infileDurationSec = 1, currentTime = 0;
 
 	while (WAIT_TIMEOUT == WaitForSingleObject(piProcInfo.hProcess, updIntervalMs))
