@@ -31,9 +31,6 @@ SettingsDialogGui::SettingsDialogGui( wxWindow* parent, wxWindowID id, const wxS
 	chkStereo = new wxCheckBox( this, wxID_ANY, wxT("Stereo"), wxDefaultPosition, wxDefaultSize, 0, wxDefaultValidator, wxT("chkStereo") );
 	bSizer6->Add( chkStereo, 0, wxALL|wxALIGN_CENTER_VERTICAL, 5 );
 
-	chkNormalize = new wxCheckBox( this, wxID_ANY, wxT("Normalize (Remove?)"), wxDefaultPosition, wxDefaultSize, 0, wxDefaultValidator, wxT("chkNormalize") );
-	bSizer6->Add( chkNormalize, 0, wxALL|wxALIGN_CENTER_VERTICAL, 5 );
-
 
 	bSizer1->Add( bSizer6, 1, wxEXPAND, 5 );
 
@@ -94,9 +91,64 @@ SettingsDialogGui::SettingsDialogGui( wxWindow* parent, wxWindowID id, const wxS
 	m_panel1->SetSizer( gSizer1 );
 	m_panel1->Layout();
 	gSizer1->Fit( m_panel1 );
-	nbTabs->AddPage( m_panel1, wxT("MP3"), true );
+	nbTabs->AddPage( m_panel1, wxT("MP3"), false );
 	m_panel2 = new wxPanel( nbTabs, wxID_ANY, wxDefaultPosition, wxDefaultSize, wxTAB_TRAVERSAL );
-	nbTabs->AddPage( m_panel2, wxT("OGG"), false );
+	wxGridSizer* gSizer11;
+	gSizer11 = new wxGridSizer( 1, 2, 0, 0 );
+
+	wxStaticBoxSizer* sbSizer11;
+	sbSizer11 = new wxStaticBoxSizer( new wxStaticBox( m_panel2, wxID_ANY, wxEmptyString ), wxVERTICAL );
+
+	cbOggAbr = new wxCheckBox( sbSizer11->GetStaticBox(), wxID_ANY, wxT("Average bitrate (ABR)"), wxDefaultPosition, wxDefaultSize, 0, wxDefaultValidator, wxT("cbOggAbr") );
+	sbSizer11->Add( cbOggAbr, 0, wxALL, 5 );
+
+	wxBoxSizer* bSizer41;
+	bSizer41 = new wxBoxSizer( wxHORIZONTAL );
+
+	m_staticText41 = new wxStaticText( sbSizer11->GetStaticBox(), wxID_ANY, wxT("Target bitrate"), wxDefaultPosition, wxDefaultSize, 0 );
+	m_staticText41->Wrap( -1 );
+	bSizer41->Add( m_staticText41, 0, wxALL|wxALIGN_CENTER_VERTICAL, 5 );
+
+	wxArrayString cbOggAbrRatesChoices;
+	cbOggAbrRates = new wxChoice( sbSizer11->GetStaticBox(), wxID_ANY, wxDefaultPosition, wxDefaultSize, cbOggAbrRatesChoices, 0, wxDefaultValidator, wxT("cbOggAbrRates") );
+	cbOggAbrRates->SetSelection( 0 );
+	bSizer41->Add( cbOggAbrRates, 0, wxALL|wxALIGN_CENTER_VERTICAL, 5 );
+
+
+	sbSizer11->Add( bSizer41, 1, wxEXPAND, 5 );
+
+
+	gSizer11->Add( sbSizer11, 1, wxEXPAND, 5 );
+
+	wxStaticBoxSizer* sbSizer21;
+	sbSizer21 = new wxStaticBoxSizer( new wxStaticBox( m_panel2, wxID_ANY, wxEmptyString ), wxVERTICAL );
+
+	cbOggVbr = new wxCheckBox( sbSizer21->GetStaticBox(), wxID_ANY, wxT("Variable bitrate (VBR)"), wxDefaultPosition, wxDefaultSize, 0, wxDefaultValidator, wxT("cbOggVbr") );
+	sbSizer21->Add( cbOggVbr, 0, wxALL, 5 );
+
+	wxBoxSizer* bSizer51;
+	bSizer51 = new wxBoxSizer( wxHORIZONTAL );
+
+	m_staticText51 = new wxStaticText( sbSizer21->GetStaticBox(), wxID_ANY, wxT("Target quality"), wxDefaultPosition, wxDefaultSize, 0 );
+	m_staticText51->Wrap( -1 );
+	bSizer51->Add( m_staticText51, 0, wxALL|wxALIGN_CENTER_VERTICAL, 5 );
+
+	wxArrayString cbOggVbrQuality1Choices;
+	cbOggVbrQuality1 = new wxChoice( sbSizer21->GetStaticBox(), wxID_ANY, wxDefaultPosition, wxDefaultSize, cbOggVbrQuality1Choices, 0, wxDefaultValidator, wxT("cbMp3VbrQuality") );
+	cbOggVbrQuality1->SetSelection( 0 );
+	bSizer51->Add( cbOggVbrQuality1, 0, wxALL|wxALIGN_CENTER_VERTICAL, 5 );
+
+
+	sbSizer21->Add( bSizer51, 1, wxEXPAND, 5 );
+
+
+	gSizer11->Add( sbSizer21, 1, wxEXPAND, 5 );
+
+
+	m_panel2->SetSizer( gSizer11 );
+	m_panel2->Layout();
+	gSizer11->Fit( m_panel2 );
+	nbTabs->AddPage( m_panel2, wxT("OGG"), true );
 
 	bSizer1->Add( nbTabs, 1, wxEXPAND | wxALL, 5 );
 
@@ -124,6 +176,8 @@ SettingsDialogGui::SettingsDialogGui( wxWindow* parent, wxWindowID id, const wxS
 	// Connect Events
 	cbMp3Cbr->Connect( wxEVT_COMMAND_CHECKBOX_CLICKED, wxCommandEventHandler( SettingsDialogGui::cbMp3Cbr_Click ), NULL, this );
 	cbMp3Vbr->Connect( wxEVT_COMMAND_CHECKBOX_CLICKED, wxCommandEventHandler( SettingsDialogGui::cbMp3Vbr_Click ), NULL, this );
+	cbOggAbr->Connect( wxEVT_COMMAND_CHECKBOX_CLICKED, wxCommandEventHandler( SettingsDialogGui::cbOggAbr_Click ), NULL, this );
+	cbOggVbr->Connect( wxEVT_COMMAND_CHECKBOX_CLICKED, wxCommandEventHandler( SettingsDialogGui::cbOggVbr_Click ), NULL, this );
 	btnOK->Connect( wxEVT_COMMAND_BUTTON_CLICKED, wxCommandEventHandler( SettingsDialogGui::btnOK_Click ), NULL, this );
 }
 
@@ -132,6 +186,8 @@ SettingsDialogGui::~SettingsDialogGui()
 	// Disconnect Events
 	cbMp3Cbr->Disconnect( wxEVT_COMMAND_CHECKBOX_CLICKED, wxCommandEventHandler( SettingsDialogGui::cbMp3Cbr_Click ), NULL, this );
 	cbMp3Vbr->Disconnect( wxEVT_COMMAND_CHECKBOX_CLICKED, wxCommandEventHandler( SettingsDialogGui::cbMp3Vbr_Click ), NULL, this );
+	cbOggAbr->Disconnect( wxEVT_COMMAND_CHECKBOX_CLICKED, wxCommandEventHandler( SettingsDialogGui::cbOggAbr_Click ), NULL, this );
+	cbOggVbr->Disconnect( wxEVT_COMMAND_CHECKBOX_CLICKED, wxCommandEventHandler( SettingsDialogGui::cbOggVbr_Click ), NULL, this );
 	btnOK->Disconnect( wxEVT_COMMAND_BUTTON_CLICKED, wxCommandEventHandler( SettingsDialogGui::btnOK_Click ), NULL, this );
 
 }

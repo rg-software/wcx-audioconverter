@@ -41,7 +41,6 @@ class SettingsDialogGui : public wxDialog
 		wxStaticText* m_staticText3;
 		wxChoice* cbSamplingRate;
 		wxCheckBox* chkStereo;
-		wxCheckBox* chkNormalize;
 		wxNotebook* nbTabs;
 		wxPanel* m_panel1;
 		wxCheckBox* cbMp3Cbr;
@@ -51,6 +50,12 @@ class SettingsDialogGui : public wxDialog
 		wxStaticText* m_staticText5;
 		wxChoice* cbMp3VbrQuality;
 		wxPanel* m_panel2;
+		wxCheckBox* cbOggAbr;
+		wxStaticText* m_staticText41;
+		wxChoice* cbOggAbrRates;
+		wxCheckBox* cbOggVbr;
+		wxStaticText* m_staticText51;
+		wxChoice* cbOggVbrQuality1;
 		wxCheckBox* chkAlwaysShow;
 		wxButton* btnOK;
 		wxButton* btnCancel;
@@ -58,6 +63,8 @@ class SettingsDialogGui : public wxDialog
 		// Virtual event handlers, overide them in your derived class
 		virtual void cbMp3Cbr_Click( wxCommandEvent& event ) { event.Skip(); }
 		virtual void cbMp3Vbr_Click( wxCommandEvent& event ) { event.Skip(); }
+		virtual void cbOggAbr_Click( wxCommandEvent& event ) { event.Skip(); }
+		virtual void cbOggVbr_Click( wxCommandEvent& event ) { event.Skip(); }
 		virtual void btnOK_Click( wxCommandEvent& event ) { event.Skip(); }
 
 
