@@ -1,9 +1,9 @@
 # WCX Audioconverter
 Audioconverter packer plugin for Total Commander (32/64-bit version)
 
-This plugin is inspired by Plotn's [32-bit audioconverter](https://totalcmd.net/plugring/wcx_plugin_BitRate_Converter_0.html) module. Currently it supports only the most basic audio conversion functions as a proof of concept. Internally Audioconverter uses [SoX processor](http://sox.sourceforge.net/).
+This plugin is inspired by Plotn's [32-bit audioconverter](https://totalcmd.net/plugring/wcx_plugin_BitRate_Converter_0.html) module. Currently it supports only the most basic audio conversion functions as a proof of concept. Internally Audioconverter uses [FFmpeg](https://www.ffmpeg.org/).
 
-Supported formats: CDDA, CDR, FLAC, GSM, MP2, MP3, OGG, WAV. Optional volume normalization is also available:
+Supported formats: CDDA, CDR, FLAC, GSM, MP2, MP3, OGG, WAV.
 
 ![Screenshot](Screenshot.png)
 
