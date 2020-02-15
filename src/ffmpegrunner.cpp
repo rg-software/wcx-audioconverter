@@ -1,16 +1,19 @@
 #include "ffmpegrunner.h"
+#include "customargs.h"
 
 FfmpegRunner::FfmpegRunner(wchar_t* srcPath, wchar_t* filePath, std::wstring& outfile, IniFileExt& ini, tProcessDataProcW processDataProc)
 : mFfmpegFolder(join_paths(to_wstring(GetModulePath()), std::wstring(L"."))), mSrcPath(srcPath), mProcessDataProc(processDataProc)
 {
 	// here outfile still has its original extension
-	mCustomArgsAdders = { std::make_pair("MP3", &FfmpegRunner::addCustomArgsMP3) };
+	mCustomArgsAdders =	{   std::make_pair("MP3", AddCustomArgsMP3), 
+							std::make_pair("OGG", AddCustomArgsOGG) 
+						};
 
 	std::string currentTab = ini.GetStringItem("Items", "Selection", "nbTabs");
 	std::wstring outExtension = L"out";
 	
 	if (mCustomArgsAdders.find(currentTab) != mCustomArgsAdders.end())
-		outExtension = mCustomArgsAdders.find(currentTab)->second(this, ini);
+		outExtension = mCustomArgsAdders.find(currentTab)->second(*this, ini);
 
 	mSupportedTypes = ini.GetStringList("Items", "Extensions");
 	mInfile = join_paths(std::wstring(srcPath), std::wstring(filePath));
@@ -21,41 +24,23 @@ FfmpegRunner::FfmpegRunner(wchar_t* srcPath, wchar_t* filePath, std::wstring& ou
 		to_wstring(mCustomArgs) + L" " +
 		quote(mOutfile);
 
-
-	// MessageBox(0, mCommandLine.c_str(), L"", 0);
+	if(ini.GetInteger("ShowCmdLine", "Debug"))
+		MessageBox(0, mCommandLine.c_str(), L"Command line", 0);
 }
 
-void FfmpegRunner::addCustomArgsGlobal(IniFileExt& ini)
-{
-	addCustomArgument("-ar", ini.GetStringItem("Items", "Selection", "cbSamplingRate"));
-	addCustomArgument("-ac", ini.GetInteger("IsChecked", "chkStereo") ? 2 : 1);
-}
-
-std::wstring FfmpegRunner::addCustomArgsMP3(IniFileExt& ini)
-{
-	addCustomArgument("-codec:a", "libmp3lame");
-
-	if (ini.GetInteger("IsChecked", "cbMp3Cbr"))
-		addCustomArgument("-b:a", ini.GetStringItem("Items", "Selection", "cbMp3CbrRates"));
-	else // for VBR
-		addCustomArgument("-qscale:a", ini.GetInteger("Selection", "cbMp3VbrQuality") * 2); // range is 0-9 where a lower value is a higher quality
-
-	return L"mp3";
-}
-
-void FfmpegRunner::addCustomFlag(const std::string& flag)
+void FfmpegRunner::AddCustomFlag(const std::string& flag)
 {
 	mCustomArgs += " " + flag;
 }
 
-void FfmpegRunner::addCustomArgument(const std::string& arg, const std::string& value)
+void FfmpegRunner::AddCustomArgument(const std::string& arg, const std::string& value)
 {
 	mCustomArgs += " " + arg + " " + value;
 }
 
-void FfmpegRunner::addCustomArgument(const std::string& arg, int value)
+void FfmpegRunner::AddCustomArgument(const std::string& arg, int value)
 {
-	addCustomArgument(arg, std::to_string(value));
+	AddCustomArgument(arg, std::to_string(value));
 }
 
 unsigned FfmpegRunner::getTimeValue(unsigned prevValue, const char* pattern, const char* chBuf)

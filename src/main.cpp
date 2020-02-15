@@ -136,7 +136,8 @@ bool ConvertFile(wchar_t* srcPath, wchar_t* filePath, std::wstring destPath, boo
 	}
 
 	std::wstring outfileRelative = savePath ? filePath : get_filename(filePath);
-	bool result = FfmpegRunner(srcPath, filePath, join_paths(destPath, outfileRelative), ini, g_ProcessDataProc).Process();
+	std::wstring outPath = join_paths(destPath, outfileRelative);
+	bool result = FfmpegRunner(srcPath, filePath, outPath, ini, g_ProcessDataProc).Process();
 
 	if (result && moveFile)	// delete source file in case of success only
 		DeleteFile(fullFilePath.c_str());

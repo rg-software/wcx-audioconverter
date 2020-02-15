@@ -22,6 +22,9 @@
     <ClCompile Include="src\ffmpegrunner.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
+    <ClCompile Include="src\customargs.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="src\gui.h">
@@ -40,6 +43,9 @@
       <Filter>Source Files</Filter>
     </ClInclude>
     <ClInclude Include="src\ffmpegrunner.h">
+      <Filter>Source Files</Filter>
+    </ClInclude>
+    <ClInclude Include="src\customargs.h">
       <Filter>Source Files</Filter>
     </ClInclude>
   </ItemGroup>

@@ -112,3 +112,13 @@ void SettingsDialog::cbMp3Vbr_Click(wxCommandEvent& event)
 { 
 	cbMp3Cbr->SetValue(!cbMp3Vbr->GetValue());
 }
+
+void SettingsDialog::cbOggAbr_Click(wxCommandEvent& event)
+{
+	cbOggVbr->SetValue(!cbOggAbr->GetValue());
+}
+
+void SettingsDialog::cbOggVbr_Click(wxCommandEvent& event)
+{
+	cbOggAbr->SetValue(!cbOggVbr->GetValue());
+}

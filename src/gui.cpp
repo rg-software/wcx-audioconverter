@@ -133,10 +133,10 @@ SettingsDialogGui::SettingsDialogGui( wxWindow* parent, wxWindowID id, const wxS
 	m_staticText51->Wrap( -1 );
 	bSizer51->Add( m_staticText51, 0, wxALL|wxALIGN_CENTER_VERTICAL, 5 );
 
-	wxArrayString cbOggVbrQuality1Choices;
-	cbOggVbrQuality1 = new wxChoice( sbSizer21->GetStaticBox(), wxID_ANY, wxDefaultPosition, wxDefaultSize, cbOggVbrQuality1Choices, 0, wxDefaultValidator, wxT("cbMp3VbrQuality") );
-	cbOggVbrQuality1->SetSelection( 0 );
-	bSizer51->Add( cbOggVbrQuality1, 0, wxALL|wxALIGN_CENTER_VERTICAL, 5 );
+	wxArrayString cbOggVbrQualityChoices;
+	cbOggVbrQuality = new wxChoice( sbSizer21->GetStaticBox(), wxID_ANY, wxDefaultPosition, wxDefaultSize, cbOggVbrQualityChoices, 0, wxDefaultValidator, wxT("cbOggVbrQuality") );
+	cbOggVbrQuality->SetSelection( 0 );
+	bSizer51->Add( cbOggVbrQuality, 0, wxALL|wxALIGN_CENTER_VERTICAL, 5 );
 
 
 	sbSizer21->Add( bSizer51, 1, wxEXPAND, 5 );

@@ -35,6 +35,7 @@
     </ProjectConfiguration>
   </ItemGroup>
   <ItemGroup>
+    <ClCompile Include="src\customargs.cpp" />
     <ClCompile Include="src\gui.cpp" />
     <ClCompile Include="src\guirunner.cpp" />
     <ClCompile Include="src\main.cpp" />
@@ -42,6 +43,7 @@
     <ClCompile Include="src\ffmpegrunner.cpp" />
   </ItemGroup>
   <ItemGroup>
+    <ClInclude Include="src\customargs.h" />
     <ClInclude Include="src\gui.h" />
     <ClInclude Include="src\guirunner.h" />
     <ClInclude Include="src\inifileext.h" />

@@ -18,18 +18,16 @@ class FfmpegRunner
 public:
 	FfmpegRunner(wchar_t* srcPath, wchar_t* filePath, std::wstring& outfile, IniFileExt& ini, tProcessDataProcW processDataProc);
 	bool Process() const;
+	
+	void AddCustomFlag(const std::string& flag);
+	void AddCustomArgument(const std::string& arg, const std::string& value);
+	void AddCustomArgument(const std::string& arg, int value);
 
 private:
 	bool runFfmpeg() const;
 	static unsigned getTimeValue(unsigned prevValue, const char* pattern, const char* chBuf);
-	//void buildCommandLine(IniFileExt& ini);
-	void addCustomFlag(const std::string& flag);
-	void addCustomArgument(const std::string& arg, const std::string& value);
-	void addCustomArgument(const std::string& arg, int value);
-	void addCustomArgsGlobal(IniFileExt& ini);
-	std::wstring addCustomArgsMP3(IniFileExt& ini);
 
-	std::map<std::string, std::function<std::wstring(FfmpegRunner*, IniFileExt &)>> mCustomArgsAdders;
+	std::map<std::string, std::function<std::wstring(FfmpegRunner&, IniFileExt &)>> mCustomArgsAdders;
 	tProcessDataProcW mProcessDataProc;
 	wchar_t* mSrcPath;
 	std::wstring mFfmpegFolder;

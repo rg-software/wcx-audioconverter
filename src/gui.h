@@ -55,7 +55,7 @@ class SettingsDialogGui : public wxDialog
 		wxChoice* cbOggAbrRates;
 		wxCheckBox* cbOggVbr;
 		wxStaticText* m_staticText51;
-		wxChoice* cbOggVbrQuality1;
+		wxChoice* cbOggVbrQuality;
 		wxCheckBox* chkAlwaysShow;
 		wxButton* btnOK;
 		wxButton* btnCancel;

@@ -42,6 +42,9 @@ protected:
 	virtual void btnOK_Click(wxCommandEvent& event);
 	virtual void cbMp3Cbr_Click(wxCommandEvent& event);
 	virtual void cbMp3Vbr_Click(wxCommandEvent& event);
+	virtual void cbOggAbr_Click(wxCommandEvent& event);
+	virtual void cbOggVbr_Click(wxCommandEvent& event);
+
 };
 
 #endif // __settingsdialog__
