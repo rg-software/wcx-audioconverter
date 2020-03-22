@@ -148,7 +148,7 @@ bool ConvertFile(wchar_t* srcPath, wchar_t* filePath, std::wstring destPath, boo
 bool shouldShowConfigUI()
 {
 	IniFileExt ini(gPluginIniPath);
-	return ini.GetInteger("alwaysShow");
+	return ini.GetInteger("IsChecked", "chkAlwaysShow");
 }
 
 wcx_export int __stdcall PackFilesW(wchar_t* PackedFile, wchar_t* /*SubPath*/, wchar_t* SrcPath, wchar_t* AddList, int Flags)
