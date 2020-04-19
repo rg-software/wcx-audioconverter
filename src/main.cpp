@@ -21,35 +21,35 @@ namespace
 	HWND foundFileDialogHWND;
 }
 
-wcx_export HANDLE __stdcall OpenArchive(tOpenArchiveData* /*ArchiveData*/)
+HANDLE __stdcall OpenArchive(tOpenArchiveData* /*ArchiveData*/)
 {
 	return &gArchive;
 }
 
-wcx_export int __stdcall ReadHeader(HANDLE /*hArcData*/, tHeaderData* /*HeaderData*/)
+int __stdcall ReadHeader(HANDLE /*hArcData*/, tHeaderData* /*HeaderData*/)
 {
 	return E_BAD_ARCHIVE;
 }
 
-wcx_export int __stdcall ProcessFile(HANDLE /*hArcData*/, int /*Operation*/, char* /*DestPath*/, char* /*DestName*/)
+int __stdcall ProcessFile(HANDLE /*hArcData*/, int /*Operation*/, char* /*DestPath*/, char* /*DestName*/)
 {
 	return E_BAD_ARCHIVE;
 }
 
-wcx_export int __stdcall CloseArchive(HANDLE /*hArcData*/) 
+int __stdcall CloseArchive(HANDLE /*hArcData*/) 
 {
 	return E_SMALL_BUF;
 }
 
-wcx_export void __stdcall SetChangeVolProc(HANDLE /*hArcData*/, tChangeVolProc /*pChangeVolProc1*/) 
+void __stdcall SetChangeVolProc(HANDLE /*hArcData*/, tChangeVolProc /*pChangeVolProc1*/) 
 {
 }
 
-wcx_export void __stdcall SetProcessDataProc(HANDLE /*hArcData*/, tProcessDataProc /*pProcessDataProc*/) 
+void __stdcall SetProcessDataProc(HANDLE /*hArcData*/, tProcessDataProc /*pProcessDataProc*/) 
 {
 }
 
-wcx_export int __stdcall PackFiles(char* /*PackedFile*/, char* /*SubPath*/, char* /*SrcPath*/, char* /*AddList*/, int /*Flags*/)
+int __stdcall PackFiles(char* /*PackedFile*/, char* /*SubPath*/, char* /*SrcPath*/, char* /*AddList*/, int /*Flags*/)
 {
 	return 0;
 }
@@ -65,12 +65,12 @@ void MessageBox(char *str)	// for debugging
 	MessageBox(NULL, unistring, L"Message", MB_OK);
 }
 
-wcx_export void __stdcall SetProcessDataProcW(HANDLE /*hArcData*/, tProcessDataProcW pProcessDataProc) 
+void __stdcall SetProcessDataProcW(HANDLE /*hArcData*/, tProcessDataProcW pProcessDataProc) 
 {
 	g_ProcessDataProc = pProcessDataProc;
 }
 
-wcx_export void __stdcall PackSetDefaultParams(PackDefaultParamStruct* dps)
+void __stdcall PackSetDefaultParams(PackDefaultParamStruct* dps)
 {	
 	gPluginIniPath = join_paths(get_dirname(std::string(dps->DefaultIniName)), std::string("audio-converter.ini"));
 
@@ -82,17 +82,17 @@ wcx_export void __stdcall PackSetDefaultParams(PackDefaultParamStruct* dps)
 	}
 }
 
-wcx_export void __stdcall ConfigurePacker(HWND Parent, HINSTANCE /*DllInstance*/) 
+void __stdcall ConfigurePacker(HWND Parent, HINSTANCE /*DllInstance*/) 
 {
 	ShowConfigUI(gPluginIniPath, Parent);
 }
 
-wcx_export int __stdcall GetPackerCaps()
+int __stdcall GetPackerCaps()
 {
 	return PK_CAPS_NEW | PK_CAPS_MULTIPLE | PK_CAPS_OPTIONS | PK_CAPS_HIDE;
 }
 
-wcx_export int _stdcall GetBackgroundFlags()
+int _stdcall GetBackgroundFlags()
 {
 	return BACKGROUND_PACK | BACKGROUND_UNPACK;	// MUST be thread-safe to show correct progress indicator (due to TC bug)
 }
@@ -151,7 +151,7 @@ bool shouldShowConfigUI()
 	return ini.GetInteger("IsChecked", "chkAlwaysShow");
 }
 
-wcx_export int __stdcall PackFilesW(wchar_t* PackedFile, wchar_t* /*SubPath*/, wchar_t* SrcPath, wchar_t* AddList, int Flags)
+int __stdcall PackFilesW(wchar_t* PackedFile, wchar_t* /*SubPath*/, wchar_t* SrcPath, wchar_t* AddList, int Flags)
 {
 	HWND parentHwnd = GetFileDialogHandle();
 

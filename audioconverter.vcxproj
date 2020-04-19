@@ -259,6 +259,7 @@
       <TargetMachine>MachineX86</TargetMachine>
       <OptimizeReferences>true</OptimizeReferences>
       <EnableCOMDATFolding>true</EnableCOMDATFolding>
+      <ModuleDefinitionFile>audioconverter.def</ModuleDefinitionFile>
     </Link>
     <Bscmake>
       <OutputFile>vc_mswu\dll_vc9_my_dll.bsc</OutputFile>
@@ -423,6 +424,7 @@
       <TargetMachine>MachineX64</TargetMachine>
       <OptimizeReferences>true</OptimizeReferences>
       <EnableCOMDATFolding>true</EnableCOMDATFolding>
+      <ModuleDefinitionFile>audioconverter.def</ModuleDefinitionFile>
     </Link>
     <Bscmake>
       <OutputFile>vc_mswu_x64\dll_vc9_my_dll.bsc</OutputFile>

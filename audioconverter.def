@@ -1,0 +1,14 @@
+EXPORTS
+  OpenArchive
+  ReadHeader
+  ProcessFile
+  CloseArchive
+  SetChangeVolProc
+  SetProcessDataProc
+  PackFiles
+  SetProcessDataProcW
+  PackSetDefaultParams
+  ConfigurePacker
+  GetPackerCaps
+  GetBackgroundFlags
+  PackFilesW
